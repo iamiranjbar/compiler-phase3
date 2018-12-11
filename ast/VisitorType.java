@@ -23,6 +23,13 @@ public class VisitorType implements Visitor {
 	SymbolTable scope;
 
 	private boolean isSubType(Type a, Type b) {
+		if (a == b) {
+			return true;
+		} else if((a instanceof UserDefinedType) && (b instanceof UserDefinedType)) {
+			String aName = ((UserDefinedType)a).getClassDeclaration().getName().getName();
+			String bName = ((UserDefinedType)b).getClassDeclaration().getName().getName();
+			return false;
+		}
 		return true;
 	}
 
