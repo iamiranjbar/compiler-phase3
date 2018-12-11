@@ -36,7 +36,7 @@ class Test2 extends Test1 {
 }
 
 class Test1 {
-    var variable : int[];
+    #var variable : int[];
     var i : int;
     def method1() : string {
         var j : string;
