@@ -12,6 +12,8 @@ import ast.node.statement.*;
 import symbolTable.*;
 import ast.Type.*;
 import ast.Type.PrimitiveType.*;
+import ast.Type.ArrayType.*;
+import ast.Type.UserDefinedType.*;
 
 
 public class VisitorType implements Visitor {
@@ -19,6 +21,10 @@ public class VisitorType implements Visitor {
 	SymbolTable symbolTable;
 	SymbolTable current;
 	SymbolTable scope;
+
+	private boolean isSubType(Type a, Type b) {
+		return true;
+	}
 
 	public VisitorType(SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
@@ -122,7 +128,14 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(length.toString());
         if (length.getExpression() != null) {
-            length.getExpression().accept(this);   
+            length.getExpression().accept(this);
+            if (length.getExpression().getType() instanceof ArrayType) {
+              	length.setType(new IntType());
+            } else if (length.getExpression().getType() instanceof NoType) {
+            	length.setType(new NoType());
+            } else {
+
+            }
         }
     }
 
@@ -173,7 +186,11 @@ public class VisitorType implements Visitor {
             unaryExpression.getValue().accept(this);
             if (unaryExpression.getType() instanceof IntType) {
                	unaryExpression.setType(new IntType());
-            }   
+            } else if (unaryExpression.getType() instanceof NoType) {
+            	unaryExpression.setType(new NoType());
+            } else {
+
+            }
         }
     }
 
@@ -181,18 +198,21 @@ public class VisitorType implements Visitor {
     public void visit(BooleanValue value) {
         //TODO: implement appropriate visit functionality
         //System.out.println(value.toString());
+        value.setType(new BooleanType());
     }
 
     @Override
     public void visit(IntValue value) {
         //TODO: implement appropriate visit functionality
         //System.out.println(value.toString());
+        value.setType(new IntType());
     }
 
     @Override
     public void visit(StringValue value) {
         //TODO: implement appropriate visit functionality
         //System.out.println(value.toString());
+        value.setType(new StringType());
     }
 
     @Override
@@ -201,7 +221,12 @@ public class VisitorType implements Visitor {
         //System.out.println(assign.toString());
         if (assign.getlValue() != null && assign.getrValue() != null) {
             assign.getlValue().accept(this);
-            assign.getrValue().accept(this);   
+            assign.getrValue().accept(this);
+            if (isSubType(assign.getlValue().getType(), assign.getrValue().getType())) {
+              	
+            } else {
+
+            }
         }
     }
 
@@ -223,7 +248,15 @@ public class VisitorType implements Visitor {
         if (conditional.getExpression() != null && conditional.getConsequenceBody() != null && conditional.getAlternativeBody() != null) {
             conditional.getExpression().accept(this);
             conditional.getConsequenceBody().accept(this);
-            conditional.getAlternativeBody().accept(this);   
+            conditional.getAlternativeBody().accept(this);
+            if ((conditional.getExpression().getType() instanceof BooleanType
+            	|| conditional.getExpression().getType() instanceof NoType)
+            	&& conditional.getConsequenceBody().getType() instanceof VoidType
+            	&& conditional.getAlternativeBody().getType() instanceof VoidType) {
+               	
+            } else {
+
+            }
         }
     }
 
