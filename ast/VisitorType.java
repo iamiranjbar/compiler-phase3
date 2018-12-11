@@ -10,6 +10,9 @@ import ast.node.expression.Value.IntValue;
 import ast.node.expression.Value.StringValue;
 import ast.node.statement.*;
 import symbolTable.*;
+import ast.Type.*;
+import ast.Type.PrimitiveType.*;
+
 
 public class VisitorType implements Visitor {
 
@@ -96,7 +99,15 @@ public class VisitorType implements Visitor {
         if (binaryExpression.getLeft() != null && binaryExpression.getRight() != null) {
             binaryExpression.getLeft().accept(this);
             binaryExpression.getRight().accept(this); 
-            // if(binaryExpression.getLeft().getType() instanceof
+            if(binaryExpression.getLeft().getType() instanceof IntType
+            	&& binaryExpression.getRight().getType() instanceof IntType){
+            	binaryExpression.setType(new IntType());
+            } else if(binaryExpression.getLeft().getType() instanceof NoType
+            	|| binaryExpression.getRight().getType() instanceof NoType){
+            	binaryExpression.setType(new NoType());
+            } else {
+
+            }
         }
     }
 
@@ -159,7 +170,10 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(unaryExpression.toString());
         if (unaryExpression.getValue() != null) {
-            unaryExpression.getValue().accept(this);   
+            unaryExpression.getValue().accept(this);
+            if (unaryExpression.getType() instanceof IntType) {
+               	unaryExpression.setType(new IntType());
+            }   
         }
     }
 
@@ -228,7 +242,9 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(write.toString());
         if (write.getArg() != null) {
-            write.getArg().accept(this);   
+            write.getArg().accept(this);
+            if (!(write.getArg().getType() instanceof IntType || write.getArg().getType() instanceof StringType)) {
+            	System.out.println("unsupported type for writeln");            }   
         }
     }
 }

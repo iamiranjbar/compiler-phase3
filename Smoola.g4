@@ -82,7 +82,7 @@ grammar Smoola;
 				printErrors(errors);
 			} else {
 				VisitorImpl visitor = new VisitorImpl();
-				$program1.synthesized_type.accept(visitor);
+				//$program1.synthesized_type.accept(visitor);
 				VisitorType visitorType = new VisitorType($program1.synthesized_table);
 				$program1.synthesized_type.accept(visitorType);
 			}

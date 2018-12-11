@@ -41,6 +41,7 @@ class Test1 {
     def method1() : string {
         var j : string;
         j = "hello world!";
+	writeln(j);
         return j;
     }
 }
