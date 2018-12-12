@@ -196,6 +196,7 @@ grammar Smoola;
         'class' name = ID 
 		{
 			$synthesized_type = new ClassDeclaration(new Identifier($name.getText()), null);
+			$synthesized_type.setLine($name.getLine());
 		}
 		'{' 'def' mainMethod = ID '(' ')' ':' 'int' '{'  statements 'return' expression ';' '}' '}'
 		{
@@ -219,7 +220,10 @@ grammar Smoola;
     ;
     classDeclaration [int inherited_error_count, int inherited_index, SymbolTable inherited_table, ArrayList<ErrorItem> errors] returns [ArrayList<ErrorItem> errors_, int synthesized_index,int error_count, ClassDeclaration synthesized_type, SymbolTable synthesized_table]:
         'class' name = ID ('extends' father_name = ID)? 
-		{$synthesized_type = new ClassDeclaration(new Identifier($name.getText()), (($father_name != null) ? new Identifier($father_name.getText()) : null));}
+		{
+			$synthesized_type = new ClassDeclaration(new Identifier($name.getText()), (($father_name != null) ? new Identifier($father_name.getText()) : null));
+			$synthesized_type.setLine($name.getLine());
+		}
 		'{' (varDeclaration
 		{
 			try {
@@ -427,8 +431,11 @@ grammar Smoola;
 		{$synthesized_type = new While($expression.synthesized_type,$statement.synthesized_type);}
     ;
     statementWrite returns [Write synthesized_type]:
-        'writeln(' expression ')' ';' 
-		{$synthesized_type = new Write($expression.synthesized_type);} 
+        e = 'writeln(' expression ')' ';' 
+		{
+			$synthesized_type = new Write($expression.synthesized_type);
+			$synthesized_type.setLine($e.line);
+		} 
     ;
     statementAssignment returns [Assign synthesized_type,int error_count, ErrorItem error_item]:
         expression ';' 

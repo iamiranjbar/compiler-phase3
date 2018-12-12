@@ -22,15 +22,47 @@ public class VisitorType implements Visitor {
 	SymbolTable current;
 	SymbolTable scope;
 
+	private Type findIdType(String id) {
+		try{
+			return ((scope.get(id) != null && scope.get(id) instanceof SymbolTableVariableItemBase) ?
+				((SymbolTableVariableItemBase)(scope.get(id))).getType() : null);
+		} catch (ItemNotFoundException e) {
+			try{
+				return ((current.get(id) != null && current.get(id) instanceof SymbolTableVariableItemBase) ?
+					((SymbolTableVariableItemBase)(current.get(id))).getType() : null);
+			} catch (ItemNotFoundException e1) {
+				return null;
+			}
+		}
+	}
+
+	private String findFather(String child) {
+		try{
+			if (((SymbolTableClassItem)(symbolTable.get(child))).getParentName() != null) {
+				return ((SymbolTableClassItem)(symbolTable.get(child))).getParentName();
+			} else {
+				return "";
+			}
+		} catch(ItemNotFoundException e) {
+			return "";
+		}
+	}
+
 	private boolean isSubType(Type a, Type b) {
 		if (a == b) {
 			return true;
 		} else if((a instanceof UserDefinedType) && (b instanceof UserDefinedType)) {
 			String aName = ((UserDefinedType)a).getClassDeclaration().getName().getName();
 			String bName = ((UserDefinedType)b).getClassDeclaration().getName().getName();
-			return false;
+			while (findFather(aName) != bName) {
+				if (findFather(aName) == "") {
+					return false;
+				}
+				aName = findFather(aName);
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	public VisitorType(SymbolTable symbolTable) {
@@ -111,16 +143,18 @@ public class VisitorType implements Visitor {
         //System.out.println(binaryExpression.toString());
         if (binaryExpression.getLeft() != null && binaryExpression.getRight() != null) {
             binaryExpression.getLeft().accept(this);
-            binaryExpression.getRight().accept(this); 
-            if(binaryExpression.getLeft().getType() instanceof IntType
+            binaryExpression.getRight().accept(this);
+
+        	if(binaryExpression.getLeft().getType() instanceof IntType
             	&& binaryExpression.getRight().getType() instanceof IntType){
             	binaryExpression.setType(new IntType());
             } else if(binaryExpression.getLeft().getType() instanceof NoType
             	|| binaryExpression.getRight().getType() instanceof NoType){
             	binaryExpression.setType(new NoType());
             } else {
-
-            }
+            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
+            		binaryExpression.getBinaryOperator().name());
+            }	
         }
     }
 
@@ -128,6 +162,14 @@ public class VisitorType implements Visitor {
     public void visit(Identifier identifier) {
         //TODO: implement appropriate visit functionality
         //System.out.println(identifier.toString());
+        // String id = identifier.getName();
+        // System.out.println(id);
+        // if (findIdType(id) != null) {
+        //   	identifier.setType(findIdType(id));
+        // } else if (findIdType(id) == null) {
+        // 	System.out.printf("Line:%d:variable %s is not declared", identifier.getLine(), id);
+        // 	identifier.setType(new NoType());
+        // }
     }
 
     @Override
@@ -136,12 +178,13 @@ public class VisitorType implements Visitor {
         //System.out.println(length.toString());
         if (length.getExpression() != null) {
             length.getExpression().accept(this);
-            if (length.getExpression().getType() instanceof ArrayType) {
+            System.out.println(((Identifier)(length.getExpression())).getName());
+            String id = ((Identifier)(length.getExpression())).getName();
+            if (findIdType(id) instanceof ArrayType) {
               	length.setType(new IntType());
-            } else if (length.getExpression().getType() instanceof NoType) {
+            } else if (findIdType(id) == null) {
+            	System.out.printf("Line:%d:variable %s is not declared", length.getLine(), id);
             	length.setType(new NoType());
-            } else {
-
             }
         }
     }
@@ -230,9 +273,9 @@ public class VisitorType implements Visitor {
             assign.getlValue().accept(this);
             assign.getrValue().accept(this);
             if (isSubType(assign.getlValue().getType(), assign.getrValue().getType())) {
-              	
+              	assign.setType(new VoidType());
             } else {
-
+            	System.out.printf("Line:%d:left side of assignment must be a valid lvalue\n", 0);
             }
         }
     }
@@ -256,13 +299,13 @@ public class VisitorType implements Visitor {
             conditional.getExpression().accept(this);
             conditional.getConsequenceBody().accept(this);
             conditional.getAlternativeBody().accept(this);
-            if ((conditional.getExpression().getType() instanceof BooleanType
+            /*if ((conditional.getExpression().getType() instanceof BooleanType
             	|| conditional.getExpression().getType() instanceof NoType)
             	&& conditional.getConsequenceBody().getType() instanceof VoidType
             	&& conditional.getAlternativeBody().getType() instanceof VoidType) {
                	
-            } else {
-
+            } else*/ if(!(conditional.getExpression().getType() instanceof BooleanType)){
+            	System.out.printf("Line:%d:condition type must be boolean\n",0);
             }
         }
     }
@@ -273,7 +316,10 @@ public class VisitorType implements Visitor {
         //System.out.println(loop.toString());
         if (loop.getCondition() != null && loop.getBody() != null) {
             loop.getCondition().accept(this);
-            loop.getBody().accept(this);   
+            loop.getBody().accept(this);
+            if(!(loop.getCondition().getType() instanceof BooleanType)){
+            	System.out.printf("Line:%d:condition type must be boolean\n",0);
+            }   
         }
     }
 
@@ -283,8 +329,12 @@ public class VisitorType implements Visitor {
         //System.out.println(write.toString());
         if (write.getArg() != null) {
             write.getArg().accept(this);
-            if (!(write.getArg().getType() instanceof IntType || write.getArg().getType() instanceof StringType)) {
-            	System.out.println("unsupported type for writeln");            }   
+            if (!(write.getArg().getType() instanceof IntType
+            	|| write.getArg().getType() instanceof StringType
+            	|| write.getArg().getType() instanceof ArrayType)) {
+            	// TODO: add line number in nodes in ast;
+            	System.out.printf("Line:%d:unsupported type for writeln\n", write.getLine());
+        	}   
         }
     }
 }
