@@ -36,6 +36,20 @@ public class VisitorType implements Visitor {
 		}
 	}
 
+	private boolean findId(String id) {
+		try{
+			return (scope != null && scope.get(id) != null
+				&& scope.get(id) instanceof SymbolTableVariableItemBase) ? true : false;
+		} catch (ItemNotFoundException e) {
+			try{
+				return (current != null && current.get(id) != null
+					&& current.get(id) instanceof SymbolTableVariableItemBase) ? true : false;
+			} catch (ItemNotFoundException e1) {
+				return false;
+			}
+		}
+	}
+
 	private String findFather(String child) {
 		try{
 			if (((SymbolTableClassItem)(symbolTable.get(child))).getParentName() != null) {
@@ -145,15 +159,33 @@ public class VisitorType implements Visitor {
             binaryExpression.getLeft().accept(this);
             binaryExpression.getRight().accept(this);
 
-        	if(binaryExpression.getLeft().getType() instanceof IntType
-            	&& binaryExpression.getRight().getType() instanceof IntType){
-            	binaryExpression.setType(new IntType());
-            } else if(binaryExpression.getLeft().getType() instanceof NoType
-            	|| binaryExpression.getRight().getType() instanceof NoType){
-            	binaryExpression.setType(new NoType());
+            if (!(binaryExpression.getBinaryOperator().name() == "||"
+            	|| binaryExpression.getBinaryOperator().name() == "&&")) {
+
+            	if(binaryExpression.getLeft().getType() instanceof IntType
+	            	&& binaryExpression.getRight().getType() instanceof IntType){
+	            	binaryExpression.setType((binaryExpression.getBinaryOperator().name() == "=="
+	            		|| binaryExpression.getBinaryOperator().name() == "<>"
+	            		|| binaryExpression.getBinaryOperator().name() == "<"
+	            		|| binaryExpression.getBinaryOperator().name() == ">") ? new BooleanType() : new IntType());
+	            } else if(binaryExpression.getLeft().getType() instanceof NoType
+	            	|| binaryExpression.getRight().getType() instanceof NoType){
+	            	binaryExpression.setType(new NoType());
+	            } else {
+	            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
+	            		binaryExpression.getBinaryOperator().name());
+	            }	
             } else {
-            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
-            		binaryExpression.getBinaryOperator().name());
+            	if(binaryExpression.getLeft().getType() instanceof BooleanType
+	            	&& binaryExpression.getRight().getType() instanceof BooleanType){
+	            	binaryExpression.setType(new BooleanType());
+	            } else if(binaryExpression.getLeft().getType() instanceof NoType
+	            	|| binaryExpression.getRight().getType() instanceof NoType){
+	            	binaryExpression.setType(new NoType());
+	            } else {
+	            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
+	            		binaryExpression.getBinaryOperator().name());
+	            }
             }	
         }
     }
@@ -162,14 +194,16 @@ public class VisitorType implements Visitor {
     public void visit(Identifier identifier) {
         //TODO: implement appropriate visit functionality
         //System.out.println(identifier.toString());
-        // String id = identifier.getName();
-        // System.out.println(id);
-        // if (findIdType(id) != null) {
-        //   	identifier.setType(findIdType(id));
-        // } else if (findIdType(id) == null) {
-        // 	System.out.printf("Line:%d:variable %s is not declared", identifier.getLine(), id);
-        // 	identifier.setType(new NoType());
-        // }
+        String id = identifier.getName();
+        //System.out.println(id);
+        if (findId(id)) {
+        	if (findIdType(id) != null) {
+	          	identifier.setType(findIdType(id));
+	        } else if (findIdType(id) == null) {
+	        	System.out.printf("Line:%d:variable %s is not declared", identifier.getLine(), id);
+	        	identifier.setType(new NoType());
+	        }	
+        }
     }
 
     @Override
@@ -234,8 +268,11 @@ public class VisitorType implements Visitor {
         //System.out.println(unaryExpression.toString());
         if (unaryExpression.getValue() != null) {
             unaryExpression.getValue().accept(this);
-            if (unaryExpression.getType() instanceof IntType) {
+            if (unaryExpression.getUnaryOperator().name() == "-" && unaryExpression.getType() instanceof IntType) {
                	unaryExpression.setType(new IntType());
+            } else if (unaryExpression.getUnaryOperator().name() == "!"
+            	&& unaryExpression.getType() instanceof BooleanType) {
+            	unaryExpression.setType(new BooleanType());
             } else if (unaryExpression.getType() instanceof NoType) {
             	unaryExpression.setType(new NoType());
             } else {
