@@ -15,6 +15,7 @@ public class Program {
 
     public void setMainClass(ClassDeclaration mainClass) {
         this.mainClass = mainClass;
+        classes.add(mainClass);
     }
 
     public void addClass(ClassDeclaration classDeclaration) {
