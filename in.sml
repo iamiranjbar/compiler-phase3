@@ -1,14 +1,16 @@
 class MainClass {
     def main(): int {
-        return new Test2().method2();
+        return 1;
     }
 }
 
 class Test2 extends Test1 {
     var variable : int[];
+    var cc : Test1;
 
     def method2(): int {
         i = 10;
+        cc = new Test1();
         variable = new int[10];
         return i;
     }
@@ -18,7 +20,7 @@ class Test2 extends Test1 {
         var b:boolean;
         #a = b;
         if(a == 2) then
-            b = true;
+            b = true && false;
         else
             b = false;
 
@@ -30,7 +32,7 @@ class Test2 extends Test1 {
         return 0;
     }
 
-    def method4(): int {
+    def method6(): int {
         var arr : int[];
         arr = new int[666];
         writeln(arr.length);
@@ -45,7 +47,7 @@ class Test1 {
         var j : string;
         j = "hello world!";
 	writeln(j);
-        return j;
+        return i;
     }
 }
 

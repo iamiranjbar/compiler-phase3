@@ -14,6 +14,7 @@ import ast.Type.*;
 import ast.Type.PrimitiveType.*;
 import ast.Type.ArrayType.*;
 import ast.Type.UserDefinedType.*;
+import java.util.ArrayList;
 
 
 public class VisitorType implements Visitor {
@@ -44,7 +45,7 @@ public class VisitorType implements Visitor {
 			} catch (Exception e1) {
 				//System.out.println(currentName);
 				String ans = currentName;
-				while (findFather(ans) != "" && findFather(ans) != currentName) {
+				while (!findFather(ans).equals("") && !findFather(ans).equals(currentName)) {
 					Type res;
 					//System.out.printf("fff : %s\n",findFather(ans));
 					try{
@@ -78,7 +79,7 @@ public class VisitorType implements Visitor {
 			} catch (ItemNotFoundException e1) {
 				//System.out.println(currentName);
 				String ans = currentName;
-				while (findFather(ans) != "" && findFather(ans) != currentName) {
+				while (!findFather(ans).equals("") && !findFather(ans).equals(currentName)) {
 					boolean res;
 					//System.out.printf("fff : %s\n",findFather(ans));
 					try{
@@ -98,6 +99,71 @@ public class VisitorType implements Visitor {
 				}
 				return false;
 			}
+		}
+	}
+
+	private ArrayList<Type> findMethodArgs(String name) {
+		try{
+			return ((scope.get(name) != null && scope.get(name) instanceof SymbolTableMethodItem) ?
+				((SymbolTableMethodItem)(scope.get(name))).getArgTypes() : new ArrayList<Type>());
+		} catch (Exception e) {
+			try{
+				// System.out.println(((SymbolTableVariableItemBase)(current.get(id))).getType());
+				return ((current.get(name) != null && current.get(name) instanceof SymbolTableMethodItem) ?
+				((SymbolTableMethodItem)(current.get(name))).getArgTypes() : new ArrayList<Type>());
+			} catch (Exception e1) {
+				//System.out.println(currentName);
+				String ans = currentName;
+				while (!findFather(ans).equals("") && !findFather(ans).equals(currentName)) {
+					ArrayList<Type> res;
+					//System.out.printf("fff : %s\n",findFather(ans));
+					try{
+						SymbolTable temp = ((SymbolTableClassItem)(
+							symbolTable.get(findFather(ans)))).getSymbolTable();
+						res = ((temp.get(name) != null && temp.get(name) instanceof SymbolTableMethodItem) ?
+							((SymbolTableMethodItem)(temp.get(name))).getArgTypes() : new ArrayList<Type>());
+					} catch (Exception e2) {
+						ans = findFather(ans);
+						continue;
+					}
+					return res;
+				}
+				return new ArrayList<Type>();
+			}
+		}	
+	}
+
+	private boolean hasLoop(String name) {
+		String ans = name;
+		//System.out.printf(">> %s\n",ans);
+		while (!findFather(ans).equals("")) {
+			//System.out.printf(">>>> %s , %s\n",ans, currentName);
+			if (findFather(ans).equals(currentName)) {
+				// System.out.println("ali");
+				return true;
+			}
+			ans = findFather(ans);
+			//System.out.printf(">>> %s\n",ans);
+		}
+		return false;
+	}
+
+	private boolean undefinedFather(String child) {
+		try{
+			String fatherName = ((SymbolTableClassItem)(symbolTable.get(child))).getParentName();
+			// System.out.printf(">>%s<<\n", fatherName);
+			if (fatherName != null) {
+				if (!fatherName.equals("")) {
+					symbolTable.get(fatherName);	
+				} else {
+					return false;
+				}
+			} else {
+				return false;
+			}
+			return false;
+		} catch(ItemNotFoundException e) {
+			return true;
 		}
 	}
 
@@ -122,11 +188,16 @@ public class VisitorType implements Visitor {
 		} else if (a instanceof NoType || b instanceof NoType) {
 			return true;
 		} else if((a instanceof UserDefinedType) && (b instanceof UserDefinedType)) {
+			System.out.println(((UserDefinedType)b).getClassDeclaration());
+			if (((UserDefinedType)a).getClassDeclaration() == null
+				|| ((UserDefinedType)b).getClassDeclaration() == null) {
+				return false;
+			}
 			String aName = ((UserDefinedType)a).getClassDeclaration().getName().getName();
 			String bName = ((UserDefinedType)b).getClassDeclaration().getName().getName();
-			while (findFather(aName) != bName) {
-				if (findFather(aName) == ""
-					|| findFather(aName) == ((UserDefinedType)a).getClassDeclaration().getName().getName()) {
+			while (!findFather(aName).equals(bName)) {
+				if (findFather(aName).equals("")
+					|| findFather(aName).equals(((UserDefinedType)a).getClassDeclaration().getName().getName())) {
 					return false;
 				}
 				aName = findFather(aName);
@@ -151,7 +222,6 @@ public class VisitorType implements Visitor {
         		currentName = program.getClasses().get(i).getName().getName();
 	   			current =
 	   				((SymbolTableClassItem)(symbolTable.get(program.getClasses().get(i).getName().getName()))).getSymbolTable();
-
 	   		} catch(Exception e){}
         	program.getClasses().get(i).accept(this);
         }
@@ -160,13 +230,21 @@ public class VisitorType implements Visitor {
     @Override
     public void visit(ClassDeclaration classDeclaration) {
         //TODO: implement appropriate visit functionality
-
+    	if (hasLoop(classDeclaration.getName().getName())) {
+    		System.out.printf("Line:%d:inheritance loop for class %s\n",
+    			classDeclaration.getLine(), classDeclaration.getName().getName());		
+    	} else if (undefinedFather(classDeclaration.getName().getName())) {
+    		System.out.printf("Line:%d:undefined father class %s\n",
+    			classDeclaration.getLine(), findFather(classDeclaration.getName().getName()));
+    	}
         for (int i = 0; i < classDeclaration.getMethodDeclarations().size(); ++i) {
         	// current = 
         	// 	current.get(classDeclaration.getMethodDeclarations().get(i).getName().getName()).getSymbolTable();
         	try{
 	        	scope =
-	        		((SymbolTableMethodItem)(current.get(classDeclaration.getMethodDeclarations().get(i).getName().getName()))).getScope();
+	        		((SymbolTableMethodItem)(
+	        			current.get(classDeclaration.getMethodDeclarations().get(i).getName().getName()))).getScope();
+	        	// System.out.println("hjhjh");	
 	        } catch(Exception e){}
         	classDeclaration.getMethodDeclarations().get(i).accept(this);
         }
@@ -189,7 +267,14 @@ public class VisitorType implements Visitor {
         	methodDeclaration.getBody().get(i).accept(this);
         }
         if (methodDeclaration.getReturnValue() != null) {
-            methodDeclaration.getReturnValue().accept(this);   
+            methodDeclaration.getReturnValue().accept(this);
+			if (isSubType(methodDeclaration.getReturnValue().getType(), methodDeclaration.getReturnType())) {
+              	methodDeclaration.setType(new VoidType());
+            } else {
+            	System.out.printf("Line:%d:%s return type must be %s\n",
+            		methodDeclaration.getLine() ,methodDeclaration.getName().getName(), methodDeclaration.getReturnType());
+            	methodDeclaration.setType(new VoidType());
+            }               
         }
     }
 
@@ -218,15 +303,17 @@ public class VisitorType implements Visitor {
             binaryExpression.getLeft().accept(this);
             binaryExpression.getRight().accept(this);
 
-            if (!(binaryExpression.getBinaryOperator().name() == "||"
-            	|| binaryExpression.getBinaryOperator().name() == "&&")) {
+            if (!(binaryExpression.getBinaryOperator().name().equals("or")
+            	|| binaryExpression.getBinaryOperator().name().equals("and"))) {
 
             	if(binaryExpression.getLeft().getType() instanceof IntType
 	            	&& binaryExpression.getRight().getType() instanceof IntType){
-	            	binaryExpression.setType((binaryExpression.getBinaryOperator().name() == "=="
-	            		|| binaryExpression.getBinaryOperator().name() == "<>"
-	            		|| binaryExpression.getBinaryOperator().name() == "<"
-	            		|| binaryExpression.getBinaryOperator().name() == ">") ? new BooleanType() : new IntType());
+            		System.out.println("yess!");
+            		System.out.println(binaryExpression.getBinaryOperator().name());
+	            	binaryExpression.setType((binaryExpression.getBinaryOperator().name().equals("eq")
+	            		|| binaryExpression.getBinaryOperator().name().equals("neq")
+	            		|| binaryExpression.getBinaryOperator().name().equals("lt")
+	            		|| binaryExpression.getBinaryOperator().name().equals("gt")) ? new BooleanType() : new IntType());
 	            } else if(binaryExpression.getLeft().getType() instanceof NoType
 	            	|| binaryExpression.getRight().getType() instanceof NoType){
 	            	binaryExpression.setType(new NoType());
@@ -236,18 +323,21 @@ public class VisitorType implements Visitor {
 	            		binaryExpression.getBinaryOperator().name());
 	            }	
             } else {
-            	if(binaryExpression.getLeft().getType() instanceof BooleanType
-	            	&& binaryExpression.getRight().getType() instanceof BooleanType){
-	            	binaryExpression.setType(new BooleanType());
-	            } else if(binaryExpression.getLeft().getType() instanceof NoType
-	            	|| binaryExpression.getRight().getType() instanceof NoType){
-	            	binaryExpression.setType(new NoType());
-	            } else {
-	            	binaryExpression.setType(new NoType());
-	            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
-	            		binaryExpression.getBinaryOperator().name());
-	            }
-            }	
+            	if (!binaryExpression.getBinaryOperator().name().equals("assign")) {
+            		if(binaryExpression.getLeft().getType() instanceof BooleanType
+		            	&& binaryExpression.getRight().getType() instanceof BooleanType){
+		            	binaryExpression.setType(new BooleanType());
+		            } else if(binaryExpression.getLeft().getType() instanceof NoType
+		            	|| binaryExpression.getRight().getType() instanceof NoType){
+		            	binaryExpression.setType(new NoType());
+		            } else {
+		            	binaryExpression.setType(new NoType());
+		            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
+		            		binaryExpression.getBinaryOperator().name());
+		            }	
+            	}
+            }
+            System.out.println(binaryExpression.getType());
         }
     }
 
@@ -261,7 +351,7 @@ public class VisitorType implements Visitor {
         	if (findIdType(id) != null) {
 	          	identifier.setType(findIdType(id));
 	        } else if (findIdType(id) == null) {
-	        	System.out.printf("Line:%d:variable %s is not declared", identifier.getLine(), id);
+	        	System.out.printf("Line:%d:variable %s is not declared\n", identifier.getLine(), id);
 	        	identifier.setType(new NoType());
 	        }	
         }
@@ -278,7 +368,7 @@ public class VisitorType implements Visitor {
             if (findIdType(id) instanceof ArrayType) {
               	length.setType(new IntType());
             } else if (findIdType(id) == null) {
-            	System.out.printf("Line:%d:variable %s is not declared", length.getLine(), id);
+            	System.out.printf("Line:%d:variable %s is not declared\n", length.getLine(), id);
             	length.setType(new NoType());
             }
         }
@@ -288,15 +378,39 @@ public class VisitorType implements Visitor {
     public void visit(MethodCall methodCall) {
         //TODO: implement appropriate visit functionality
         //System.out.println(methodCall.toString());
+        int error = 0;
         if (methodCall.getInstance() != null) {
             methodCall.getInstance().accept(this);   
         }
         if (methodCall.getMethodName() != null) {
             methodCall.getMethodName().accept(this);   
         }
-        for (int i = 0; i < methodCall.getArgs().size(); ++i) {
-        	methodCall.getArgs().get(i).accept(this);
-        }
+        if (findMethodArgs(methodCall.getMethodName().getName()).size() == methodCall.getArgs().size()) {
+	        for (int i = 0; i < methodCall.getArgs().size(); ++i) {
+	        	methodCall.getArgs().get(i).accept(this);
+	        	if (!isSubType(methodCall.getArgs().get(i).getType(),
+	        		findMethodArgs(methodCall.getMethodName().getName()).get(i))) {
+	        		error++;
+	        		System.out.printf("Line:%d:%dth arg of %s's type must be %s\n",
+	        			methodCall.getArgs().get(i).getLine(), i, methodCall.getMethodName().getName(),
+	        			findMethodArgs(methodCall.getMethodName().getName()).get(i));
+	        	}
+	        }
+    	} else {
+    		error++;
+    		if (findMethodArgs(methodCall.getMethodName().getName()).size() > methodCall.getArgs().size()) {
+    			System.out.printf("Line:%d:few args pass to method %s\n", methodCall.getLine(),
+    				methodCall.getMethodName().getName());
+    		} else {
+    			System.out.printf("Line:%d:too many args pass to method %s\n",
+    				methodCall.getLine(), methodCall.getMethodName().getName());
+    		}
+    	}
+    	if (error == 0) {
+    		methodCall.setType(new NoType());
+    	} else {
+    		methodCall.setType(new NoType());
+    	}
     }
 
     @Override
@@ -314,7 +428,12 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(newClass.toString());
         if (newClass.getClassName() != null) {
-            newClass.getClassName().accept(this);   
+            newClass.getClassName().accept(this);
+            UserDefinedType temp = new UserDefinedType();
+            temp.setClassDeclaration(new ClassDeclaration(
+            	new Identifier(newClass.getClassName().getName()),
+            	new Identifier(findFather(newClass.getClassName().getName()))));
+            newClass.setType(temp);
         }
     }
 
@@ -322,6 +441,7 @@ public class VisitorType implements Visitor {
     public void visit(This instance) {
         //TODO: implement appropriate visit functionality
         //System.out.println(instance.toString());
+
     }
 
     @Override
@@ -330,9 +450,10 @@ public class VisitorType implements Visitor {
         //System.out.println(unaryExpression.toString());
         if (unaryExpression.getValue() != null) {
             unaryExpression.getValue().accept(this);
-            if (unaryExpression.getUnaryOperator().name() == "-" && unaryExpression.getType() instanceof IntType) {
+            if (unaryExpression.getUnaryOperator().name().equals("minus")
+            	&& unaryExpression.getType() instanceof IntType) {
                	unaryExpression.setType(new IntType());
-            } else if (unaryExpression.getUnaryOperator().name() == "!"
+            } else if (unaryExpression.getUnaryOperator().name().equals("not")
             	&& unaryExpression.getType() instanceof BooleanType) {
             	unaryExpression.setType(new BooleanType());
             } else if (unaryExpression.getType() instanceof NoType) {
@@ -376,7 +497,7 @@ public class VisitorType implements Visitor {
             if (isSubType(assign.getlValue().getType(), assign.getrValue().getType())) {
               	assign.setType(new VoidType());
             } else {
-            	System.out.printf("Line:%d:left side of assignment must be a valid lvalue\n", 0);
+            	System.out.printf("Line:%d:left side of assignment must be a valid lvalue\n", assign.getLine());
             }
         }
     }
@@ -395,7 +516,7 @@ public class VisitorType implements Visitor {
     @Override
     public void visit(Conditional conditional) {
         //TODO: implement appropriate visit functionality
-        //System.out.println(conditional.toString());
+        System.out.println(conditional.toString());
         if (conditional.getExpression() != null && conditional.getConsequenceBody() != null && conditional.getAlternativeBody() != null) {
             conditional.getExpression().accept(this);
             conditional.getConsequenceBody().accept(this);
@@ -406,7 +527,7 @@ public class VisitorType implements Visitor {
             	&& conditional.getAlternativeBody().getType() instanceof VoidType) {
                	
             } else*/ if(!(conditional.getExpression().getType() instanceof BooleanType)){
-            	System.out.printf("Line:%d:condition type must be boolean\n",0);
+            	System.out.printf("Line:%d:condition type must be boolean\n", conditional.getLine());
             }
         }
     }
@@ -419,7 +540,7 @@ public class VisitorType implements Visitor {
             loop.getCondition().accept(this);
             loop.getBody().accept(this);
             if(!(loop.getCondition().getType() instanceof BooleanType)){
-            	System.out.printf("Line:%d:condition type must be boolean\n",0);
+            	System.out.printf("Line:%d:condition type must be boolean\n", loop.getLine());
             }   
         }
     }

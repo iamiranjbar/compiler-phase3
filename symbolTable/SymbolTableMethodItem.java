@@ -9,12 +9,21 @@ public class SymbolTableMethodItem extends SymbolTableItem {
     SymbolTable symbolTable;
     SymbolTable scope;
     ArrayList<Type> argTypes = new ArrayList<>();
+    Type returnType;
 
     public SymbolTableMethodItem(String name, ArrayList<Type> argTypes, int line, SymbolTable scope) {
         this.name = name;
         this.argTypes = argTypes;
         this.line = line;
 	this.scope = scope;
+    }
+
+    public void setReturnType(Type returnType) {
+	this.returnType = returnType;
+    }
+
+    public Type getReturnType() {
+	return returnType;
     }
 
     public SymbolTable getScope() {
