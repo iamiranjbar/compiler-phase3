@@ -102,6 +102,38 @@ public class VisitorType implements Visitor {
 		}
 	}
 
+	private boolean findMethodName(String id, String className) {
+
+		System.out.println(className);
+		String ans = className;
+		try{
+			SymbolTable temp = ((SymbolTableClassItem)(
+				symbolTable.get(className))).getSymbolTable();
+			return ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+				true : false);
+		} catch (Exception e) {
+			while (!findFather(ans).equals("") && !findFather(ans).equals(className)) {
+				boolean res;
+				System.out.printf("fff : %s\n",findFather(ans));
+				try{
+					SymbolTable temp = ((SymbolTableClassItem)(
+						symbolTable.get(findFather(ans)))).getSymbolTable();
+					res = ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+						true : false);
+				} catch (Exception e2) {
+					ans = findFather(ans);
+					continue;
+				}
+				if (res == false) {
+					ans = findFather(ans);
+					continue;
+				}
+				return res;
+			}
+		}
+		return false;
+	}
+
 	private ArrayList<Type> findMethodArgs(String name) {
 		try{
 			return ((scope.get(name) != null && scope.get(name) instanceof SymbolTableMethodItem) ?
@@ -395,6 +427,8 @@ public class VisitorType implements Visitor {
             methodCall.getInstance().accept(this);
             if (!(methodCall.getInstance().getType() instanceof UserDefinedType)) {
                	error++;
+               	System.out.printf("Line:%d:you can not call method %s from primitive type.\n", methodCall.getLine(),
+	            		methodCall.getMethodName().getName());
             } else if (!findClassName(
             	((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
             	error++;
@@ -404,7 +438,14 @@ public class VisitorType implements Visitor {
         }
         if (methodCall.getMethodName() != null) {
             methodCall.getMethodName().accept(this);
-               
+            if (error == 0) {
+               	if (!findMethodName(methodCall.getMethodName().getName(),
+               		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
+               		error++;
+               		System.out.printf("Line:%d:there is no method named %s in class %s\n", methodCall.getLine(),
+	            		methodCall.getMethodName().getName(), ((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
+               	}
+            }   
         }
         if (findMethodArgs(methodCall.getMethodName().getName()).size() == methodCall.getArgs().size()) {
 	        for (int i = 0; i < methodCall.getArgs().size(); ++i) {

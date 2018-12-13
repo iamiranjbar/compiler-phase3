@@ -11,7 +11,7 @@ class Test2 extends Test1 {
     def method2(): int {
         i = 10;
         cc = new Test1();
-        i = (new D()).u();
+        #i = i.u();
         variable = new int[10];
         return i;
     }
