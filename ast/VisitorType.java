@@ -503,14 +503,14 @@ public class VisitorType implements Visitor {
 	    			System.out.printf("Line:%d:too many args pass to method %s\n",
 	    				methodCall.getLine(), methodCall.getMethodName().getName());
 	    		}
-	    	}
-	    	if (error == 0) {
-	    		methodCall.setType(findReturnTypeOfMethod(methodCall.getMethodName().getName(),
-	    			((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName()));
-	    	} else {
-	    		methodCall.setType(new NoType());
 	    	}	
         }
+        if (error == 0) {
+    		methodCall.setType(findReturnTypeOfMethod(methodCall.getMethodName().getName(),
+    			((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName()));
+    	} else {
+    		methodCall.setType(new NoType());
+    	}
     }
 
     @Override

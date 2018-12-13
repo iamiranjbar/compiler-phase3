@@ -29,7 +29,7 @@ class Test2 extends Test1 {
             a = a - 1;
         }
 
-        writeln("Hello kiki!");
+        writeln(false);
         return 0;
     }
 
@@ -52,3 +52,10 @@ class Test1 {
     }
 }
 
+class A extends B{
+
+}
+
+class B extends A{
+    
+}
