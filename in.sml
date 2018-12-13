@@ -1,6 +1,6 @@
 class MainClass {
     def main(): int {
-        return new Test2().method2();
+        return (new Test2()).method2();
     }
 }
 
@@ -8,9 +8,8 @@ class Test2 extends Test1 {
     var variable : int[];
 
     def method2(): int {
-        i = -variable;
+        i = 10;
         variable = new int[10];
-        variable = variable;
         return i;
     }
 
@@ -23,12 +22,12 @@ class Test2 extends Test1 {
         else
             b = false;
 
-        while(a <> 0) {
+        while(((new Test2()).method4() <> (new Test1()).method1()) || true) {
             a = a - 1;
         }
 
         writeln("Hello kiki!");
-        return 0;
+        return this.method3();
     }
 
     def method4(): int {
@@ -41,7 +40,7 @@ class Test2 extends Test1 {
 
 class Test1 {
     #var variable : int[];
-    #var i : int;
+    var i : int;
     def method1() : string {
         var j : string;
         j = "hello world!";

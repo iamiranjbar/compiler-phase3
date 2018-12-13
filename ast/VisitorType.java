@@ -85,17 +85,12 @@ public class VisitorType implements Visitor {
 					try{
 						SymbolTable temp = ((SymbolTableClassItem)(
 							symbolTable.get(findFather(ans)))).getSymbolTable();
-						res = ((temp.get(id) != null && temp.get(id) instanceof SymbolTableVariableItemBase) ?
+						return ((temp.get(id) != null && temp.get(id) instanceof SymbolTableVariableItemBase) ?
 							true : false);
 					} catch (Exception e2) {
 						ans = findFather(ans);
 						continue;
 					}
-					if (res == false) {
-						ans = findFather(ans);
-						continue;
-					}
-					return res;
 				}
 				return true;
 			}
@@ -383,21 +378,48 @@ public class VisitorType implements Visitor {
             if (!(binaryExpression.getBinaryOperator().name().equals("or")
             	|| binaryExpression.getBinaryOperator().name().equals("and"))) {
 
-            	if(binaryExpression.getLeft().getType() instanceof IntType
-	            	&& binaryExpression.getRight().getType() instanceof IntType){
-            		// System.out.println("yess!");
-            		// System.out.println(binaryExpression.getBinaryOperator().name());
-	            	binaryExpression.setType((binaryExpression.getBinaryOperator().name().equals("eq")
-	            		|| binaryExpression.getBinaryOperator().name().equals("neq")
-	            		|| binaryExpression.getBinaryOperator().name().equals("lt")
-	            		|| binaryExpression.getBinaryOperator().name().equals("gt")) ? new BooleanType() : new IntType());
-	            } else if(binaryExpression.getLeft().getType() instanceof NoType
-	            	|| binaryExpression.getRight().getType() instanceof NoType){
-	            	binaryExpression.setType(new NoType());
-	            } else {
-	            	binaryExpression.setType(new NoType());
-	            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
-	            		binaryExpression.getBinaryOperator().name());
+            	if (binaryExpression.getBinaryOperator().name().equals("eq")
+	            		|| binaryExpression.getBinaryOperator().name().equals("neq")) {
+            		if(binaryExpression.getLeft().getType() instanceof IntType
+		            	&& binaryExpression.getRight().getType() instanceof IntType){
+	            		binaryExpression.setType(new BooleanType());
+	            	} else if (binaryExpression.getLeft().getType() instanceof BooleanType
+		            	&& binaryExpression.getRight().getType() instanceof BooleanType) {
+	            		binaryExpression.setType(new BooleanType());
+	            	} else if (binaryExpression.getLeft().getType() instanceof ArrayType
+		            	&& binaryExpression.getRight().getType() instanceof ArrayType) {
+	            		binaryExpression.setType(new BooleanType());
+	            	} else if (binaryExpression.getLeft().getType() instanceof StringType
+		            	&& binaryExpression.getRight().getType() instanceof StringType) {
+	            		binaryExpression.setType(new BooleanType());
+	            	} else if (binaryExpression.getLeft().getType() instanceof UserDefinedType
+		            	&& binaryExpression.getRight().getType() instanceof UserDefinedType
+		            	&& (isSubType(binaryExpression.getLeft().getType(), binaryExpression.getRight().getType())
+		            	|| isSubType(binaryExpression.getRight().getType(), binaryExpression.getLeft().getType()))) {
+	            		binaryExpression.setType(new BooleanType());
+	            	} else if(binaryExpression.getLeft().getType() instanceof NoType
+		            	|| binaryExpression.getRight().getType() instanceof NoType){
+		            	binaryExpression.setType(new NoType());
+		            } else {
+		            	binaryExpression.setType(new NoType());
+		            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
+		            		binaryExpression.getBinaryOperator().name());
+		            }
+            	} else {
+	            	if(binaryExpression.getLeft().getType() instanceof IntType
+		            	&& binaryExpression.getRight().getType() instanceof IntType){
+	            		// System.out.println("yess!");
+	            		// System.out.println(binaryExpression.getBinaryOperator().name());
+		            	binaryExpression.setType((binaryExpression.getBinaryOperator().name().equals("lt")
+		            		|| binaryExpression.getBinaryOperator().name().equals("gt")) ? new BooleanType() : new IntType());
+		            } else if(binaryExpression.getLeft().getType() instanceof NoType
+		            	|| binaryExpression.getRight().getType() instanceof NoType){
+		            	binaryExpression.setType(new NoType());
+		            } else {
+		            	binaryExpression.setType(new NoType());
+		            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
+		            		binaryExpression.getBinaryOperator().name());
+		            }
 	            }	
             } else {
             	if (!binaryExpression.getBinaryOperator().name().equals("assign")) {
@@ -550,6 +572,11 @@ public class VisitorType implements Visitor {
     public void visit(This instance) {
         //TODO: implement appropriate visit functionality
         //System.out.println(instance.toString());
+        UserDefinedType temp = new UserDefinedType();
+        temp.setClassDeclaration(new ClassDeclaration(
+        	new Identifier(currentName),
+        	new Identifier(findFather(currentName))));
+        instance.setType(temp);
 
     }
 
