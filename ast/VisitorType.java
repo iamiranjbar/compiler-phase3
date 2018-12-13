@@ -44,7 +44,7 @@ public class VisitorType implements Visitor {
 			} catch (Exception e1) {
 				//System.out.println(currentName);
 				String ans = currentName;
-				while (findFather(ans) != "") {
+				while (findFather(ans) != "" && findFather(ans) != currentName) {
 					Type res;
 					//System.out.printf("fff : %s\n",findFather(ans));
 					try{
@@ -78,7 +78,7 @@ public class VisitorType implements Visitor {
 			} catch (ItemNotFoundException e1) {
 				//System.out.println(currentName);
 				String ans = currentName;
-				while (findFather(ans) != "") {
+				while (findFather(ans) != "" && findFather(ans) != currentName) {
 					boolean res;
 					//System.out.printf("fff : %s\n",findFather(ans));
 					try{
@@ -125,7 +125,8 @@ public class VisitorType implements Visitor {
 			String aName = ((UserDefinedType)a).getClassDeclaration().getName().getName();
 			String bName = ((UserDefinedType)b).getClassDeclaration().getName().getName();
 			while (findFather(aName) != bName) {
-				if (findFather(aName) == "") {
+				if (findFather(aName) == ""
+					|| findFather(aName) == ((UserDefinedType)a).getClassDeclaration().getName().getName()) {
 					return false;
 				}
 				aName = findFather(aName);
@@ -150,6 +151,7 @@ public class VisitorType implements Visitor {
         		currentName = program.getClasses().get(i).getName().getName();
 	   			current =
 	   				((SymbolTableClassItem)(symbolTable.get(program.getClasses().get(i).getName().getName()))).getSymbolTable();
+
 	   		} catch(Exception e){}
         	program.getClasses().get(i).accept(this);
         }
