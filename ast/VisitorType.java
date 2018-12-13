@@ -97,7 +97,7 @@ public class VisitorType implements Visitor {
 					}
 					return res;
 				}
-				return false;
+				return true;
 			}
 		}
 	}
@@ -423,13 +423,16 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(identifier.toString());
         String id = identifier.getName();
-        //System.out.println(id);
+        // System.out.println(id);
         if (findId(id)) {
         	if (findIdType(id) != null) {
 	          	identifier.setType(findIdType(id));
 	        } else if (findIdType(id) == null) {
 	        	System.out.printf("Line:%d:variable %s is not declared\n", identifier.getLine(), id);
 	        	identifier.setType(new NoType());
+	        	try{
+	        		scope.put(new SymbolTableVariableItemBase(id, new NoType(), -1, identifier.getLine()));
+	        	} catch(Exception e) {}
 	        }	
         }
     }
@@ -556,14 +559,15 @@ public class VisitorType implements Visitor {
         //System.out.println(unaryExpression.toString());
         if (unaryExpression.getValue() != null) {
             unaryExpression.getValue().accept(this);
-            if (unaryExpression.getUnaryOperator().name().equals("minus")
-            	&& unaryExpression.getType() instanceof IntType) {
+            // System.out.println(unaryExpression.getValue().getType());
+            if (unaryExpression.getValue().getType() instanceof NoType) {
+            	unaryExpression.setType(new NoType());
+            } else if (unaryExpression.getUnaryOperator().name().equals("minus")
+            	&& unaryExpression.getValue().getType() instanceof IntType) {
                	unaryExpression.setType(new IntType());
             } else if (unaryExpression.getUnaryOperator().name().equals("not")
-            	&& unaryExpression.getType() instanceof BooleanType) {
+            	&& unaryExpression.getValue().getType() instanceof BooleanType) {
             	unaryExpression.setType(new BooleanType());
-            } else if (unaryExpression.getType() instanceof NoType) {
-            	unaryExpression.setType(new NoType());
             } else {
             	System.out.printf("Line:%d:unsupported operand type for %s\n", unaryExpression.getLine(),
 	            		unaryExpression.getUnaryOperator().name());
@@ -601,8 +605,8 @@ public class VisitorType implements Visitor {
             assign.getrValue().accept(this);
             // System.out.println(assign.getlValue().getType());System.out.println(assign.getrValue().getType());
             if (assign.getlValue() instanceof ArrayCall || assign.getlValue() instanceof Identifier) {
-	            	if (isSubType(assign.getlValue().getType(), assign.getrValue().getType())) {
-		              	assign.setType( assign.getrValue().getType());
+	            	if (isSubType(assign.getrValue().getType(), assign.getlValue().getType())) {
+		              	assign.setType(assign.getlValue().getType());
 		            } else {
 		            	System.out.printf("Line:%d:incompatible types: %s cannot be converted to %s\n", assign.getLine(),
 		            		 assign.getrValue().getType(), assign.getlValue().getType());
@@ -639,7 +643,8 @@ public class VisitorType implements Visitor {
             	&& conditional.getConsequenceBody().getType() instanceof VoidType
             	&& conditional.getAlternativeBody().getType() instanceof VoidType) {
                	
-            } else*/ if(!(conditional.getExpression().getType() instanceof BooleanType)){
+            } else*/ if(!(conditional.getExpression().getType() instanceof BooleanType
+            	|| conditional.getExpression().getType() instanceof NoType)){
             	System.out.printf("Line:%d:condition type must be boolean\n", conditional.getLine());
             }
         }
@@ -652,7 +657,8 @@ public class VisitorType implements Visitor {
         if (loop.getCondition() != null && loop.getBody() != null) {
             loop.getCondition().accept(this);
             loop.getBody().accept(this);
-            if(!(loop.getCondition().getType() instanceof BooleanType)){
+            if(!(loop.getCondition().getType() instanceof BooleanType
+            	|| loop.getCondition().getType() instanceof NoType)){
             	System.out.printf("Line:%d:condition type must be boolean\n", loop.getLine());
             }   
         }
