@@ -11,11 +11,12 @@ public class SymbolTableMethodItem extends SymbolTableItem {
     ArrayList<Type> argTypes = new ArrayList<>();
     Type returnType;
 
-    public SymbolTableMethodItem(String name, ArrayList<Type> argTypes, int line, SymbolTable scope) {
+    public SymbolTableMethodItem(String name, ArrayList<Type> argTypes, int line, SymbolTable scope, Type returnType) {
         this.name = name;
         this.argTypes = argTypes;
         this.line = line;
 	this.scope = scope;
+	this.returnType = returnType;
     }
 
     public void setReturnType(Type returnType) {

@@ -1,6 +1,6 @@
 class MainClass {
     def main(): int {
-        return new Test2().method2();
+        return new Test2().method4();
     }
 }
 
@@ -33,11 +33,11 @@ class Test2 extends Test1 {
         return 0;
     }
 
-    def method4(): int {
+    def method4(): string {
         var arr : int[];
         arr = new int[666];
         writeln(arr.length + arr[arr]);
-        return 0;
+        return "f";
     }
 }
 
