@@ -22,15 +22,46 @@ public class VisitorType implements Visitor {
 	SymbolTable current;
 	SymbolTable scope;
 
+	String currentName;
+
 	private Type findIdType(String id) {
 		try{
-			return ((scope.get(id) != null && scope.get(id) instanceof SymbolTableVariableItemBase) ?
+			Type res = ((scope.get(id) != null && scope.get(id) instanceof SymbolTableVariableItemBase) ?
 				((SymbolTableVariableItemBase)(scope.get(id))).getType() : null);
-		} catch (ItemNotFoundException e) {
+			if (res == null) {
+				throw new Exception();
+			}
+			return res;
+		} catch (Exception e) {
 			try{
-				return ((current.get(id) != null && current.get(id) instanceof SymbolTableVariableItemBase) ?
+				// System.out.println(((SymbolTableVariableItemBase)(current.get(id))).getType());
+				Type res = ((current.get(id) != null && current.get(id) instanceof SymbolTableVariableItemBase) ?
 					((SymbolTableVariableItemBase)(current.get(id))).getType() : null);
-			} catch (ItemNotFoundException e1) {
+				if (res == null) {
+					throw new Exception();
+				}
+				return res;
+			} catch (Exception e1) {
+				//System.out.println(currentName);
+				String ans = currentName;
+				while (findFather(ans) != "") {
+					Type res;
+					//System.out.printf("fff : %s\n",findFather(ans));
+					try{
+						SymbolTable temp = ((SymbolTableClassItem)(
+							symbolTable.get(findFather(ans)))).getSymbolTable();
+						res = ((temp.get(id) != null && temp.get(id) instanceof SymbolTableVariableItemBase) ?
+							((SymbolTableVariableItemBase)(temp.get(id))).getType() : null);
+					} catch (Exception e2) {
+						ans = findFather(ans);
+						continue;
+					}
+					if (res == null) {
+						ans = findFather(ans);
+						continue;
+					}
+					return res;
+				}
 				return null;
 			}
 		}
@@ -45,6 +76,26 @@ public class VisitorType implements Visitor {
 				return (current != null && current.get(id) != null
 					&& current.get(id) instanceof SymbolTableVariableItemBase) ? true : false;
 			} catch (ItemNotFoundException e1) {
+				//System.out.println(currentName);
+				String ans = currentName;
+				while (findFather(ans) != "") {
+					boolean res;
+					//System.out.printf("fff : %s\n",findFather(ans));
+					try{
+						SymbolTable temp = ((SymbolTableClassItem)(
+							symbolTable.get(findFather(ans)))).getSymbolTable();
+						res = ((temp.get(id) != null && temp.get(id) instanceof SymbolTableVariableItemBase) ?
+							true : false);
+					} catch (Exception e2) {
+						ans = findFather(ans);
+						continue;
+					}
+					if (res == false) {
+						ans = findFather(ans);
+						continue;
+					}
+					return res;
+				}
 				return false;
 			}
 		}
@@ -63,7 +114,12 @@ public class VisitorType implements Visitor {
 	}
 
 	private boolean isSubType(Type a, Type b) {
-		if (a == b) {
+		if ((a instanceof IntType && b instanceof IntType)
+			|| (a instanceof StringType && b instanceof StringType)
+			|| (a instanceof ArrayType && b instanceof ArrayType)
+			|| (a instanceof BooleanType && b instanceof BooleanType)) {
+			return true;
+		} else if (a instanceof NoType || b instanceof NoType) {
 			return true;
 		} else if((a instanceof UserDefinedType) && (b instanceof UserDefinedType)) {
 			String aName = ((UserDefinedType)a).getClassDeclaration().getName().getName();
@@ -91,6 +147,7 @@ public class VisitorType implements Visitor {
         }
         for (int i = 0; i < program.getClasses().size(); ++i) {
         	try{
+        		currentName = program.getClasses().get(i).getName().getName();
 	   			current =
 	   				((SymbolTableClassItem)(symbolTable.get(program.getClasses().get(i).getName().getName()))).getSymbolTable();
 	   		} catch(Exception e){}
@@ -172,6 +229,7 @@ public class VisitorType implements Visitor {
 	            	|| binaryExpression.getRight().getType() instanceof NoType){
 	            	binaryExpression.setType(new NoType());
 	            } else {
+	            	binaryExpression.setType(new NoType());
 	            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
 	            		binaryExpression.getBinaryOperator().name());
 	            }	
@@ -183,6 +241,7 @@ public class VisitorType implements Visitor {
 	            	|| binaryExpression.getRight().getType() instanceof NoType){
 	            	binaryExpression.setType(new NoType());
 	            } else {
+	            	binaryExpression.setType(new NoType());
 	            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
 	            		binaryExpression.getBinaryOperator().name());
 	            }
@@ -212,7 +271,7 @@ public class VisitorType implements Visitor {
         //System.out.println(length.toString());
         if (length.getExpression() != null) {
             length.getExpression().accept(this);
-            System.out.println(((Identifier)(length.getExpression())).getName());
+            // System.out.println(((Identifier)(length.getExpression())).getName());
             String id = ((Identifier)(length.getExpression())).getName();
             if (findIdType(id) instanceof ArrayType) {
               	length.setType(new IntType());
@@ -243,7 +302,8 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(newArray.toString());
         if (newArray.getExpression() != null) {
-            newArray.getExpression().accept(this);   
+            newArray.getExpression().accept(this);
+            newArray.setType(new ArrayType());   
         }
     }
 
@@ -276,7 +336,8 @@ public class VisitorType implements Visitor {
             } else if (unaryExpression.getType() instanceof NoType) {
             	unaryExpression.setType(new NoType());
             } else {
-
+            	System.out.printf("Line:%d:unsupported operand type for %s\n", unaryExpression.getLine(),
+	            		unaryExpression.getUnaryOperator().name());
             }
         }
     }
@@ -309,6 +370,7 @@ public class VisitorType implements Visitor {
         if (assign.getlValue() != null && assign.getrValue() != null) {
             assign.getlValue().accept(this);
             assign.getrValue().accept(this);
+            // System.out.println(assign.getlValue().getType());System.out.println(assign.getrValue().getType());
             if (isSubType(assign.getlValue().getType(), assign.getrValue().getType())) {
               	assign.setType(new VoidType());
             } else {
