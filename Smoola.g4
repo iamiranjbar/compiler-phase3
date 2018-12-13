@@ -170,7 +170,8 @@ grammar Smoola;
 						if (element instanceof SymbolTableMethodItem) {
 			        		try{
 			        			((SymbolTableClassItem)(pair.getValue())).putItem(new SymbolTableMethodItem("#temp_" + ((SymbolTableMethodItem)element).getName() + Integer.toString(index++),
-			        				((SymbolTableMethodItem)element).getArgTypes(), ((SymbolTableMethodItem)element).getLine(), ((SymbolTableMethodItem)element).getScope()));
+			        				((SymbolTableMethodItem)element).getArgTypes(), ((SymbolTableMethodItem)element).getLine(),
+			        				((SymbolTableMethodItem)element).getScope(), ((SymbolTableMethodItem)element).getReturnType()));
 			        		}catch(ItemAlreadyExistsException e3){
 
 			        		}
@@ -202,7 +203,7 @@ grammar Smoola;
 		{
         	try {
         		if ($mainMethod.getText() != null) {
-        			$inherited_table.put(new SymbolTableMethodItem($mainMethod.getText(),null,$mainMethod.line,null));	
+        			$inherited_table.put(new SymbolTableMethodItem($mainMethod.getText(),null,$mainMethod.line,null, new IntType()));	
         		}	
         	}
         	catch(Exception e) {
@@ -253,14 +254,19 @@ grammar Smoola;
 			try {
 				if ($methodDeclaration.synthesized_type != null) {
 					$synthesized_type.addMethodDeclaration($methodDeclaration.synthesized_type);
-					$inherited_table.put(new SymbolTableMethodItem($methodDeclaration.synthesized_type.getName().getName(),$methodDeclaration.synthesized_type.getArgTypes(), $methodDeclaration.start.getLine(), $methodDeclaration.synthesized_table));	
+					$inherited_table.put(new SymbolTableMethodItem($methodDeclaration.synthesized_type.getName().getName(),
+						$methodDeclaration.synthesized_type.getArgTypes(), $methodDeclaration.start.getLine(),
+						$methodDeclaration.synthesized_table, $methodDeclaration.synthesized_type.getReturnType()));	
 				}	
 			}
 			catch(ItemAlreadyExistsException e) {
 				$inherited_error_count++;
 				try{
 					// print("temp_" + $methodDeclaration.synthesized_type.getName().getName() + Integer.toString($inherited_index++));
-					$inherited_table.put(new SymbolTableMethodItem("#temp_" + $methodDeclaration.synthesized_type.getName().getName() + Integer.toString($inherited_index++),$methodDeclaration.synthesized_type.getArgTypes(), $methodDeclaration.start.getLine(), $methodDeclaration.synthesized_table));
+					$inherited_table.put(
+						new SymbolTableMethodItem("#temp_" + $methodDeclaration.synthesized_type.getName().getName() + Integer.toString($inherited_index++),
+							$methodDeclaration.synthesized_type.getArgTypes(), $methodDeclaration.start.getLine(),
+							$methodDeclaration.synthesized_table, $methodDeclaration.synthesized_type.getReturnType()));
 				}catch(ItemAlreadyExistsException e2){
 
 				}

@@ -1,6 +1,6 @@
 class MainClass {
     def main(): int {
-        return new Test2().method2();
+        return new Test2().method4();
     }
 }
 
@@ -11,7 +11,7 @@ class Test2 extends Test1 {
     def method2(): int {
         i = 10;
         cc = new Test1();
-        i = (new D()).u();
+        #i = i.u();
         variable = new int[10];
         return i;
     }
@@ -29,15 +29,15 @@ class Test2 extends Test1 {
             a = a - 1;
         }
 
-        writeln("Hello kiki!");
+        writeln(false);
         return 0;
     }
 
-    def method4(): int {
+    def method4(): string {
         var arr : int[];
         arr = new int[666];
-        writeln(arr.length);
-        return 0;
+        writeln(arr.length + arr[arr]);
+        return "f";
     }
 }
 
@@ -52,3 +52,10 @@ class Test1 {
     }
 }
 
+class A extends B{
+
+}
+
+class B extends A{
+    
+}

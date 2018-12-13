@@ -102,35 +102,88 @@ public class VisitorType implements Visitor {
 		}
 	}
 
-	private ArrayList<Type> findMethodArgs(String name) {
+	private boolean findMethodName(String id, String className) {
+
+		// System.out.println(className);
+		String ans = className;
 		try{
-			return ((scope.get(name) != null && scope.get(name) instanceof SymbolTableMethodItem) ?
-				((SymbolTableMethodItem)(scope.get(name))).getArgTypes() : new ArrayList<Type>());
+			SymbolTable temp = ((SymbolTableClassItem)(
+				symbolTable.get(className))).getSymbolTable();
+			return ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+				true : false);
 		} catch (Exception e) {
-			try{
-				// System.out.println(((SymbolTableVariableItemBase)(current.get(id))).getType());
-				return ((current.get(name) != null && current.get(name) instanceof SymbolTableMethodItem) ?
-				((SymbolTableMethodItem)(current.get(name))).getArgTypes() : new ArrayList<Type>());
-			} catch (Exception e1) {
-				//System.out.println(currentName);
-				String ans = currentName;
-				while (!findFather(ans).equals("") && !findFather(ans).equals(currentName)) {
-					ArrayList<Type> res;
-					//System.out.printf("fff : %s\n",findFather(ans));
-					try{
-						SymbolTable temp = ((SymbolTableClassItem)(
-							symbolTable.get(findFather(ans)))).getSymbolTable();
-						res = ((temp.get(name) != null && temp.get(name) instanceof SymbolTableMethodItem) ?
-							((SymbolTableMethodItem)(temp.get(name))).getArgTypes() : new ArrayList<Type>());
-					} catch (Exception e2) {
-						ans = findFather(ans);
-						continue;
-					}
-					return res;
+			while (!findFather(ans).equals("") && !findFather(ans).equals(className)) {
+				boolean res;
+				// System.out.printf("fff : %s\n",findFather(ans));
+				try{
+					SymbolTable temp = ((SymbolTableClassItem)(
+						symbolTable.get(findFather(ans)))).getSymbolTable();
+					res = ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+						true : false);
+				} catch (Exception e2) {
+					ans = findFather(ans);
+					continue;
 				}
-				return new ArrayList<Type>();
+				if (res == false) {
+					ans = findFather(ans);
+					continue;
+				}
+				return res;
 			}
-		}	
+		}
+		return false;
+	}
+
+	private Type findReturnTypeOfMethod(String id, String className) {
+		// System.out.println(className);
+		String ans = className;
+		try{
+			SymbolTable temp = ((SymbolTableClassItem)(
+				symbolTable.get(className))).getSymbolTable();
+			return ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+				((SymbolTableMethodItem)temp.get(id)).getReturnType() : null);
+		} catch (Exception e) {
+			while (!findFather(ans).equals("") && !findFather(ans).equals(className)) {
+				boolean res;
+				// System.out.printf("fff : %s\n",findFather(ans));
+				try{
+					SymbolTable temp = ((SymbolTableClassItem)(
+						symbolTable.get(findFather(ans)))).getSymbolTable();
+					return ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+						((SymbolTableMethodItem)temp.get(id)).getReturnType() : null);
+				} catch (Exception e2) {
+					ans = findFather(ans);
+					continue;
+				}
+			}
+		}
+		return null;
+	}
+
+	private ArrayList<Type> findMethodArgs(String id, String className) {
+		// System.out.println(className);
+		String ans = className;
+		try{
+			SymbolTable temp = ((SymbolTableClassItem)(
+				symbolTable.get(className))).getSymbolTable();
+			return ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+				((SymbolTableMethodItem)temp.get(id)).getArgTypes() : new ArrayList<Type>());
+		} catch (Exception e) {
+			while (!findFather(ans).equals("") && !findFather(ans).equals(className)) {
+				boolean res;
+				// System.out.printf("fff : %s\n",findFather(ans));
+				try{
+					SymbolTable temp = ((SymbolTableClassItem)(
+						symbolTable.get(findFather(ans)))).getSymbolTable();
+					return ((temp.get(id) != null && temp.get(id) instanceof SymbolTableMethodItem) ?
+						((SymbolTableMethodItem)temp.get(id)).getArgTypes() : new ArrayList<Type>());
+				} catch (Exception e2) {
+					ans = findFather(ans);
+					continue;
+				}
+			}
+		}
+		return new ArrayList<Type>();	
 	}
 
 	private boolean hasLoop(String name) {
@@ -200,7 +253,7 @@ public class VisitorType implements Visitor {
 		} else if (a instanceof NoType || b instanceof NoType) {
 			return true;
 		} else if((a instanceof UserDefinedType) && (b instanceof UserDefinedType)) {
-			System.out.println(((UserDefinedType)b).getClassDeclaration());
+			// System.out.println(((UserDefinedType)b).getClassDeclaration());
 			if (((UserDefinedType)a).getClassDeclaration() == null
 				|| ((UserDefinedType)b).getClassDeclaration() == null) {
 				return false;
@@ -303,7 +356,19 @@ public class VisitorType implements Visitor {
         //System.out.println(arrayCall.toString());
         if (arrayCall.getInstance() != null && arrayCall.getIndex() != null) {
             arrayCall.getInstance().accept(this);
-            arrayCall.getIndex().accept(this);   
+            arrayCall.getIndex().accept(this);
+            if (arrayCall.getInstance().getType() instanceof NoType
+            	|| arrayCall.getIndex().getType() instanceof NoType) {
+            	arrayCall.setType(new NoType());
+            }else if (!(arrayCall.getInstance().getType() instanceof ArrayType)) {
+            	System.out.printf("Line:%d:instance type must be ArrayType in ArrayCall\n", arrayCall.getLine());
+            	arrayCall.setType(new NoType());
+            } else if (!(arrayCall.getIndex().getType() instanceof IntType)) {
+              	System.out.printf("Line:%d:index type must be IntType in ArrayCall\n", arrayCall.getLine());
+              	arrayCall.setType(new NoType());
+            } else {
+            	arrayCall.setType(new IntType());
+            }
         }
     }
 
@@ -320,8 +385,8 @@ public class VisitorType implements Visitor {
 
             	if(binaryExpression.getLeft().getType() instanceof IntType
 	            	&& binaryExpression.getRight().getType() instanceof IntType){
-            		System.out.println("yess!");
-            		System.out.println(binaryExpression.getBinaryOperator().name());
+            		// System.out.println("yess!");
+            		// System.out.println(binaryExpression.getBinaryOperator().name());
 	            	binaryExpression.setType((binaryExpression.getBinaryOperator().name().equals("eq")
 	            		|| binaryExpression.getBinaryOperator().name().equals("neq")
 	            		|| binaryExpression.getBinaryOperator().name().equals("lt")
@@ -349,7 +414,7 @@ public class VisitorType implements Visitor {
 		            }	
             	}
             }
-            System.out.println(binaryExpression.getType());
+            // System.out.println(binaryExpression.getType());
         }
     }
 
@@ -395,6 +460,8 @@ public class VisitorType implements Visitor {
             methodCall.getInstance().accept(this);
             if (!(methodCall.getInstance().getType() instanceof UserDefinedType)) {
                	error++;
+               	System.out.printf("Line:%d:you can not call method %s from primitive type.\n", methodCall.getLine(),
+	            		methodCall.getMethodName().getName());
             } else if (!findClassName(
             	((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
             	error++;
@@ -404,31 +471,43 @@ public class VisitorType implements Visitor {
         }
         if (methodCall.getMethodName() != null) {
             methodCall.getMethodName().accept(this);
-               
+            if (error == 0) {
+               	if (!findMethodName(methodCall.getMethodName().getName(),
+               		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
+               		error++;
+               		System.out.printf("Line:%d:there is no method named %s in class %s\n", methodCall.getLine(),
+	            		methodCall.getMethodName().getName(),
+	            		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
+               	}
+            }   
         }
-        if (findMethodArgs(methodCall.getMethodName().getName()).size() == methodCall.getArgs().size()) {
-	        for (int i = 0; i < methodCall.getArgs().size(); ++i) {
-	        	methodCall.getArgs().get(i).accept(this);
-	        	if (!isSubType(methodCall.getArgs().get(i).getType(),
-	        		findMethodArgs(methodCall.getMethodName().getName()).get(i))) {
-	        		error++;
-	        		System.out.printf("Line:%d:%dth arg of %s's type must be %s\n",
-	        			methodCall.getArgs().get(i).getLine(), i, methodCall.getMethodName().getName(),
-	        			findMethodArgs(methodCall.getMethodName().getName()).get(i));
-	        	}
-	        }
-    	} else {
-    		error++;
-    		if (findMethodArgs(methodCall.getMethodName().getName()).size() > methodCall.getArgs().size()) {
-    			System.out.printf("Line:%d:few args pass to method %s\n", methodCall.getLine(),
-    				methodCall.getMethodName().getName());
-    		} else {
-    			System.out.printf("Line:%d:too many args pass to method %s\n",
-    				methodCall.getLine(), methodCall.getMethodName().getName());
-    		}
-    	}
-    	if (error == 0) {
-    		methodCall.setType(new NoType());
+        if (error == 0) {
+        	ArrayList<Type> symbolOfMethod = findMethodArgs(methodCall.getMethodName().getName(),
+	        	((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
+	        if (symbolOfMethod.size() == methodCall.getArgs().size()) {
+		        for (int i = 0; i < methodCall.getArgs().size(); ++i) {
+		        	methodCall.getArgs().get(i).accept(this);
+		        	if (!isSubType(methodCall.getArgs().get(i).getType(), symbolOfMethod.get(i))) {
+		        		error++;
+		        		System.out.printf("Line:%d:%dth arg of %s's type must be %s\n",
+		        			methodCall.getArgs().get(i).getLine(), i, methodCall.getMethodName().getName(),
+		        			symbolOfMethod.get(i));
+		        	}
+		        }
+	    	} else {
+	    		error++;
+	    		if (symbolOfMethod.size() > methodCall.getArgs().size()) {
+	    			System.out.printf("Line:%d:few args pass to method %s\n", methodCall.getLine(),
+	    				methodCall.getMethodName().getName());
+	    		} else {
+	    			System.out.printf("Line:%d:too many args pass to method %s\n",
+	    				methodCall.getLine(), methodCall.getMethodName().getName());
+	    		}
+	    	}	
+        }
+        if (error == 0) {
+    		methodCall.setType(findReturnTypeOfMethod(methodCall.getMethodName().getName(),
+    			((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName()));
     	} else {
     		methodCall.setType(new NoType());
     	}
@@ -543,7 +622,7 @@ public class VisitorType implements Visitor {
     @Override
     public void visit(Conditional conditional) {
         //TODO: implement appropriate visit functionality
-        System.out.println(conditional.toString());
+        // System.out.println(conditional.toString());
         if (conditional.getExpression() != null && conditional.getConsequenceBody() != null && conditional.getAlternativeBody() != null) {
             conditional.getExpression().accept(this);
             conditional.getConsequenceBody().accept(this);
@@ -580,7 +659,8 @@ public class VisitorType implements Visitor {
             write.getArg().accept(this);
             if (!(write.getArg().getType() instanceof IntType
             	|| write.getArg().getType() instanceof StringType
-            	|| write.getArg().getType() instanceof ArrayType)) {
+            	|| write.getArg().getType() instanceof ArrayType
+            	|| write.getArg().getType() instanceof NoType)) {
             	// TODO: add line number in nodes in ast;
             	System.out.printf("Line:%d:unsupported type for writeln\n", write.getLine());
         	}   
