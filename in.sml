@@ -36,7 +36,7 @@ class Test2 extends Test1 {
     def method4(): int {
         var arr : int[];
         arr = new int[666];
-        writeln(arr.length);
+        writeln(arr.length + arr[arr]);
         return 0;
     }
 }

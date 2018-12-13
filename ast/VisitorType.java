@@ -335,7 +335,19 @@ public class VisitorType implements Visitor {
         //System.out.println(arrayCall.toString());
         if (arrayCall.getInstance() != null && arrayCall.getIndex() != null) {
             arrayCall.getInstance().accept(this);
-            arrayCall.getIndex().accept(this);   
+            arrayCall.getIndex().accept(this);
+            if (arrayCall.getInstance().getType() instanceof NoType
+            	|| arrayCall.getIndex().getType() instanceof NoType) {
+            	arrayCall.setType(new NoType());
+            }else if (!(arrayCall.getInstance().getType() instanceof ArrayType)) {
+            	System.out.printf("Line:%d:instance type must be ArrayType in ArrayCall\n", arrayCall.getLine());
+            	arrayCall.setType(new NoType());
+            } else if (!(arrayCall.getIndex().getType() instanceof IntType)) {
+              	System.out.printf("Line:%d:index type must be IntType in ArrayCall\n", arrayCall.getLine());
+              	arrayCall.setType(new NoType());
+            } else {
+            	arrayCall.setType(new IntType());
+            }
         }
     }
 
