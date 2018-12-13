@@ -10,7 +10,7 @@ class Test2 extends Test1 {
 
     def method2(): int {
         i = 10;
-        cc = new Test1();
+        2 + 9 = new Test1();
         #i = i.u();
         variable = new int[10];
         return i;

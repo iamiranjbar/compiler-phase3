@@ -600,10 +600,17 @@ public class VisitorType implements Visitor {
             assign.getlValue().accept(this);
             assign.getrValue().accept(this);
             // System.out.println(assign.getlValue().getType());System.out.println(assign.getrValue().getType());
-            if (isSubType(assign.getlValue().getType(), assign.getrValue().getType())) {
-              	assign.setType(new VoidType());
+            if (assign.getlValue() instanceof ArrayCall || assign.getlValue() instanceof Identifier) {
+	            	if (isSubType(assign.getlValue().getType(), assign.getrValue().getType())) {
+		              	assign.setType( assign.getrValue().getType());
+		            } else {
+		            	System.out.printf("Line:%d:incompatible types: %s cannot be converted to %s\n", assign.getLine(),
+		            		 assign.getrValue().getType(), assign.getlValue().getType());
+		            	assign.setType(new NoType());
+		            }	
             } else {
             	System.out.printf("Line:%d:left side of assignment must be a valid lvalue\n", assign.getLine());
+            	assign.setType(new NoType());
             }
         }
     }
