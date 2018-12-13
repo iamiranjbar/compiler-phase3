@@ -8,9 +8,13 @@ class Test2 extends Test1 {
     var variable : int[];
 
     def method2(): int {
-        i = 10;
+        i = this.nn(new Test1()).method3();
         variable = new int[10];
         return i;
+    }
+
+    def nn(d : int) : string{
+        return d;
     }
 
     def method3(): int {
