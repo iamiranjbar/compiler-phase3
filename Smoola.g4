@@ -96,7 +96,7 @@ grammar Smoola;
 			try {
         		if ($mainClass.synthesized_type == null) {
         			throw new Exception();
-        		} //for What?!
+        		}
         		$inherited_table.put(new SymbolTableClassItem($mainClass.synthesized_type.getName().getName(), null,
         			$mainClass.synthesized_table, $mainClass.start.getLine()));
         	}
@@ -286,10 +286,17 @@ grammar Smoola;
     ;
     varDeclaration returns [VarDeclaration synthesized_type]:
         'var' ID ':' type ';' 
-		{$synthesized_type = new VarDeclaration(new Identifier($ID.getText()),$type.synthesized_type);}
+		{
+			$synthesized_type = new VarDeclaration(new Identifier($ID.getText()),$type.synthesized_type);
+			$synthesized_type.setLine($ID.getLine());
+		}
     ;
     methodDeclaration[int inherited_error_count, int inherited_index, SymbolTable inherited_table, ArrayList<ErrorItem> errors] returns [ArrayList<ErrorItem> errors_, int synthesized_index,int error_count, SymbolTable synthesized_table,MethodDeclaration synthesized_type]:
-        {$synthesized_table = new SymbolTable();}'def' name = ID {$synthesized_type = new MethodDeclaration(new Identifier($name.getText()));}
+		{$synthesized_table = new SymbolTable();}
+		'def' name = ID {
+			$synthesized_type = new MethodDeclaration(new Identifier($name.getText()));
+			$synthesized_type.setLine($name.getLine());
+		}
 		('(' ')' | ('(' n1 = ID ':' type 
 		{
 			$synthesized_type.addArg(new VarDeclaration(new Identifier($n1.getText()),$type.synthesized_type));
@@ -387,29 +394,37 @@ grammar Smoola;
         statementBlock 
 		{
 			$synthesized_type = $statementBlock.synthesized_type;
+			$synthesized_type.setLine($statementBlock.synthesized_type.getLine());
 		} |
         statementCondition
 		{
 			$synthesized_type = $statementCondition.synthesized_type;
+			$synthesized_type.setLine($statementCondition.synthesized_type.getLine());
 		} |
         statementLoop
 		{
 			$synthesized_type = $statementLoop.synthesized_type;
+			$synthesized_type.setLine($statementLoop.synthesized_type.getLine());
 		} |
         statementWrite
 		{
 			$synthesized_type = $statementWrite.synthesized_type;
+			$synthesized_type.setLine($statementWrite.synthesized_type.getLine());
 		} |
         statementAssignment
 		{
 			$synthesized_type = $statementAssignment.synthesized_type;
 			$error_count = $statementAssignment.error_count;
 			$error_item = $statementAssignment.error_item;
+			$synthesized_type.setLine($statementAssignment.synthesized_type.getLine());
 		}
 		)
     ;
     statementBlock returns [Block synthesized_type]:
-        '{' {$synthesized_type = new Block();}statements
+        temp = '{' {
+			$synthesized_type = new Block();
+			$synthesized_type.setLine($temp.line);
+		}statements
 		{
 			for (int i =0 ; i < $statements.synthesized_type.size(); ++i){
 				$synthesized_type.addStatement($statements.synthesized_type.get(i));
@@ -418,29 +433,34 @@ grammar Smoola;
     ;
 
     statementCondition returns [Conditional synthesized_type]:
-        'if' '('expression')' 'then' s1 = statement 
+        temp = 'if' '('expression')' 'then' s1 = statement 
 		{
 			$synthesized_type = new Conditional($expression.synthesized_type, $s1.synthesized_type);
+			$synthesized_type.setLine($temp.line);
 		}
 		('else' statement 
 		{$synthesized_type.setAlternativeBody($statement.synthesized_type);}
 		)?
     ;
     statementLoop returns [While synthesized_type]:
-        'while' '(' expression ')' statement 
-		{$synthesized_type = new While($expression.synthesized_type,$statement.synthesized_type);}
+        temp = 'while' '(' expression ')' statement 
+		{
+			$synthesized_type = new While($expression.synthesized_type,$statement.synthesized_type);
+			$synthesized_type.setLine($temp.line);
+		}
     ;
     statementWrite returns [Write synthesized_type]:
-        e = 'writeln(' expression ')' ';' 
+        temp = 'writeln(' expression ')' ';' 
 		{
 			$synthesized_type = new Write($expression.synthesized_type);
-			$synthesized_type.setLine($e.line);
+			$synthesized_type.setLine($temp.line);
 		} 
     ;
     statementAssignment returns [Assign synthesized_type,int error_count, ErrorItem error_item]:
         expression ';' 
 		{
 			$synthesized_type = new Assign(((BinaryExpression)$expression.synthesized_type).getLeft(),((BinaryExpression)$expression.synthesized_type).getRight());
+			$synthesized_type.setLine($expression.synthesized_type.getLine());
 			$error_count = $expression.error_count;
 			$error_item = $expression.error_item;
 		}
@@ -450,6 +470,7 @@ grammar Smoola;
 		expressionAssignment 
 		{
 			$synthesized_type = $expressionAssignment.synthesized_type;
+			$synthesized_type.setLine($expressionAssignment.synthesized_type.getLine());
 			$error_count = $expressionAssignment.error_count;
 			$error_item = $expressionAssignment.error_item;
 		}
@@ -459,6 +480,7 @@ grammar Smoola;
 		expressionOr '=' expressionAssignment 
 		{
 			$synthesized_type = new BinaryExpression($expressionOr.synthesized_type,$expressionAssignment.synthesized_type,BinaryOperator.assign);
+			$synthesized_type.setLine($expressionOr.synthesized_type.getLine());
 			$error_count = $expressionAssignment.error_count;
 			$error_item = $expressionAssignment.error_item;
 
@@ -466,6 +488,7 @@ grammar Smoola;
 	    |	expressionOr 
 		{
 			$synthesized_type = $expressionOr.synthesized_type;
+			$synthesized_type.setLine($expressionOr.synthesized_type.getLine());
 			$error_count = $expressionOr.error_count;
 			$error_item = $expressionOr.error_item;
 		}
@@ -475,29 +498,39 @@ grammar Smoola;
 		expressionAnd expressionOrTemp[$expressionAnd.synthesized_type] 
 		{
 			$synthesized_type = $expressionOrTemp.synthesized_type;
+			$synthesized_type.setLine($expressionAnd.synthesized_type.getLine());
 			$error_count = $expressionAnd.error_count;
 			$error_item = $expressionAnd.error_item;
 		}
 	;
 
     expressionOrTemp [Expression inherited_type] returns [Expression synthesized_type]:
-		'||' expressionAnd expressionOrTemp[$expressionAnd.synthesized_type] 
-		{$synthesized_type = new BinaryExpression($inherited_type,$expressionOrTemp.synthesized_type,BinaryOperator.or);}
-	    | {$synthesized_type = $inherited_type;}
+		temp = '||' expressionAnd expressionOrTemp[$expressionAnd.synthesized_type] 
+		{
+			$synthesized_type = new BinaryExpression($inherited_type,$expressionOrTemp.synthesized_type,BinaryOperator.or);
+			$synthesized_type.setLine($temp.line);
+		}
+	    | {
+			$synthesized_type = $inherited_type;
+		}
 	;
 
     expressionAnd returns [Expression synthesized_type,int error_count, ErrorItem error_item]:
 		expressionEq expressionAndTemp[$expressionEq.synthesized_type]
 		{
 			$synthesized_type = $expressionAndTemp.synthesized_type;
+			$synthesized_type.setLine($expressionEq.synthesized_type.getLine());
 			$error_count = $expressionEq.error_count;
 			$error_item = $expressionEq.error_item;
 		}
 	;
 
     expressionAndTemp [Expression inherited_type] returns [Expression synthesized_type]:
-		'&&' expressionEq expressionAndTemp[$expressionEq.synthesized_type]
-		{$synthesized_type = new BinaryExpression($inherited_type,$expressionAndTemp.synthesized_type,BinaryOperator.and);}
+		temp = '&&' expressionEq expressionAndTemp[$expressionEq.synthesized_type]
+		{
+			$synthesized_type = new BinaryExpression($inherited_type,$expressionAndTemp.synthesized_type,BinaryOperator.and);
+			$synthesized_type.setLine($temp.line);
+		}
 	    | {$synthesized_type = $inherited_type;}
 	;
 
@@ -505,14 +538,25 @@ grammar Smoola;
 		expressionCmp expressionEqTemp[$expressionCmp.synthesized_type] 
 		{
 			$synthesized_type = $expressionEqTemp.synthesized_type;
+			$synthesized_type.setLine($expressionCmp.synthesized_type.getLine());
 			$error_count = $expressionCmp.error_count;
 			$error_item = $expressionCmp.error_item;
 		}
 	;
 
     expressionEqTemp [Expression inherited_type] returns [Expression synthesized_type]:
-		{BinaryOperator b;}('=='{b = BinaryOperator.eq;}|'<>'{b = BinaryOperator.neq;}) expressionCmp expressionEqTemp[$expressionCmp.synthesized_type]
-		{$synthesized_type = new BinaryExpression($inherited_type,$expressionEqTemp.synthesized_type,b);} 
+		{
+			BinaryOperator b;
+			int l;
+		}
+		(
+			temp = '=='{b = BinaryOperator.eq; l = $temp.line;}
+			|temp = '<>'{b = BinaryOperator.neq; l = $temp.line;}
+		) expressionCmp expressionEqTemp[$expressionCmp.synthesized_type]
+		{
+			$synthesized_type = new BinaryExpression($inherited_type,$expressionEqTemp.synthesized_type,b);
+			$synthesized_type.setLine(l);
+		} 
 	    | {$synthesized_type = $inherited_type;} 
 	;
 
@@ -520,29 +564,51 @@ grammar Smoola;
 		expressionAdd expressionCmpTemp[$expressionAdd.synthesized_type]
 		{
 			$synthesized_type = $expressionCmpTemp.synthesized_type;
+			$synthesized_type.setLine($expressionAdd.synthesized_type.getLine());
 			$error_count = $expressionAdd.error_count;
 			$error_item = $expressionAdd.error_item;
 		}
 	;
 
     expressionCmpTemp [Expression inherited_type] returns [Expression synthesized_type]:
-		{BinaryOperator b;}('<'{b = BinaryOperator.lt;} | '>'{b = BinaryOperator.gt;}) expressionAdd expressionCmpTemp [$expressionAdd.synthesized_type]
-		{$synthesized_type = new BinaryExpression($inherited_type,$expressionCmpTemp.synthesized_type,b);}
+		{
+			BinaryOperator b;
+			int l;
+		}
+		(
+			temp = '<'{b = BinaryOperator.lt; l = $temp.line;} |
+			temp = '>'{b = BinaryOperator.gt; l = $temp.line;}) 
+			expressionAdd expressionCmpTemp [$expressionAdd.synthesized_type]
+		{
+			$synthesized_type = new BinaryExpression($inherited_type,$expressionCmpTemp.synthesized_type,b);
+			$synthesized_type.setLine(l);
+		}
 	    | {$synthesized_type = $inherited_type;} 
-	;
+	; 
 
     expressionAdd returns [Expression synthesized_type,int error_count, ErrorItem error_item]:
 		expressionMult expressionAddTemp[$expressionMult.synthesized_type]
 		{
 			$synthesized_type = $expressionAddTemp.synthesized_type;
+			$synthesized_type.setLine($expressionMult.synthesized_type.getLine());
 			$error_count = $expressionMult.error_count;
 			$error_item = $expressionMult.error_item;
 		}
 	;
 
     expressionAddTemp [Expression inherited_type] returns [Expression synthesized_type]:
-		{BinaryOperator b;}('+'{b = BinaryOperator.add;} | '-'{b = BinaryOperator.sub;}) expressionMult expressionAddTemp[$expressionMult.synthesized_type]
-		{$synthesized_type = new BinaryExpression($inherited_type,$expressionAddTemp.synthesized_type,b);}
+		{
+			BinaryOperator b;
+			int l;
+		}
+		(
+			temp = '+'{b = BinaryOperator.add; l = $temp.line;} |
+			temp = '-'{b = BinaryOperator.sub; l = $temp.line;}) 
+			expressionMult expressionAddTemp[$expressionMult.synthesized_type]
+		{
+			$synthesized_type = new BinaryExpression($inherited_type,$expressionAddTemp.synthesized_type,b);
+			$synthesized_type.setLine(l);
+		}
 	    | {$synthesized_type = $inherited_type;} 
 	;
 
@@ -550,23 +616,40 @@ grammar Smoola;
 		expressionUnary expressionMultTemp[$expressionUnary.synthesized_type]
 		{
 			$synthesized_type = $expressionMultTemp.synthesized_type;
+			$synthesized_type.setLine($expressionUnary.synthesized_type.getLine());
 			$error_count = $expressionUnary.error_count;
 			$error_item = $expressionUnary.error_item;
 		}
 	;
 
     expressionMultTemp [Expression inherited_type] returns [Expression synthesized_type]:
-		{BinaryOperator b;}('*'{b = BinaryOperator.mult;} | '/'{b = BinaryOperator.div;}) expressionUnary expressionMultTemp[$expressionUnary.synthesized_type]
+		{
+			BinaryOperator b;
+			int l;
+		}
+		(
+			temp = '*'{b = BinaryOperator.mult; l = $temp.line;} |
+			temp = '/'{b = BinaryOperator.div; l = $temp.line;}) 
+		expressionUnary expressionMultTemp[$expressionUnary.synthesized_type]
 		{
 			$synthesized_type = new BinaryExpression($inherited_type,$expressionMultTemp.synthesized_type,b);
+			$synthesized_type.setLine(l);
 		}
 	    | {$synthesized_type = $inherited_type;} 
 	;
 
     expressionUnary returns [Expression synthesized_type,int error_count, ErrorItem error_item]:
-		{UnaryOperator u;} ('!'{u = UnaryOperator.not;} | '-'{u = UnaryOperator.minus;}) expressionUnary 
+		{
+			UnaryOperator u;
+			int l;
+		} 
+		(
+			temp = '!'{u = UnaryOperator.not; l = $temp.line;} |
+			temp = '-'{u = UnaryOperator.minus; l = $temp.line;}) 
+		expressionUnary 
 		{ 
 			$synthesized_type = new UnaryExpression(u,$expressionUnary.synthesized_type);
+			$synthesized_type.setLine(l);
 			$error_count = 0;
 			$error_item = null;
 		}
@@ -574,6 +657,7 @@ grammar Smoola;
 		expressionMem 
 		{
 			$synthesized_type = $expressionMem.synthesized_type;
+			$synthesized_type.setLine($expressionMem.synthesized_type.getLine());
 			$error_count = $expressionMem.error_count;
 			$error_item = $expressionMem.error_item;
 		}
@@ -583,32 +667,39 @@ grammar Smoola;
 		expressionMethods expressionMemTemp[$expressionMethods.synthesized_type]
 		{
 			$synthesized_type = $expressionMemTemp.synthesized_type;
+			$synthesized_type.setLine($expressionMethods.synthesized_type.getLine());
 			$error_count = $expressionMethods.error_count;
 			$error_item = $expressionMethods.error_item;
 		}
 	;
 
     expressionMemTemp [Expression inherited_type] returns [Expression synthesized_type]:
-		'[' expression ']' 
-		{$synthesized_type = new ArrayCall($inherited_type,$expression.synthesized_type);}
+		temp = '[' expression ']' 
+		{
+			$synthesized_type = new ArrayCall($inherited_type,$expression.synthesized_type);
+			$synthesized_type.setLine($temp.line);
+		}
 	    | {$synthesized_type = $inherited_type;}
 	;
 	expressionMethods returns [Expression synthesized_type,int error_count, ErrorItem error_item]:
 	    expressionOther expressionMethodsTemp[$expressionOther.synthesized_type]
 		{
 			$synthesized_type = $expressionMethodsTemp.synthesized_type;
+			$synthesized_type.setLine($expressionOther.synthesized_type.getLine());
 			$error_count = $expressionOther.error_count;
 			$error_item = $expressionOther.error_item;
 		}
 	;
 	expressionMethodsTemp [Expression inherited_type] returns [Expression synthesized_type]:
-	    '.' (ID '(' ')' 
+	    temp = '.' (ID '(' ')' 
 		{
 			$synthesized_type = new MethodCall($inherited_type,new Identifier($ID.getText()));
+			$synthesized_type.setLine($temp.line);
 		}
 		| ID 
 		{
 			$synthesized_type = new MethodCall($inherited_type,new Identifier($ID.getText()));
+			$synthesized_type.setLine($temp.line);
 		}
 		'(' (expression
 		{
@@ -621,6 +712,7 @@ grammar Smoola;
 		) ')' | 'length'
 		{
 			$synthesized_type = new Length($inherited_type);
+			$synthesized_type.setLine($temp.line);
 		})
 		expressionMethodsTemp[$synthesized_type]
 		{
@@ -631,11 +723,20 @@ grammar Smoola;
     expressionOther returns [Expression synthesized_type,int error_count, ErrorItem error_item]:
 		{$error_count = 0; $error_item = null;}
 		(
-			CONST_NUM {$synthesized_type = new IntValue(Integer.parseInt($CONST_NUM.getText()), new IntType());}
-        |	CONST_STR {$synthesized_type = new StringValue($CONST_STR.getText(),new StringType());}
-        |   'new ' 'int' '[' index = CONST_NUM ']' 
+			CONST_NUM 
+			{
+				$synthesized_type = new IntValue(Integer.parseInt($CONST_NUM.getText()), new IntType());
+				$synthesized_type.setLine($CONST_NUM.getLine());
+			}
+		|	CONST_STR 
+		{
+			$synthesized_type = new StringValue($CONST_STR.getText(),new StringType());
+			$synthesized_type.setLine($CONST_STR.getLine());
+		}
+        |   temp = 'new ' 'int' '[' index = CONST_NUM ']' 
 		{
 			$synthesized_type = new NewArray();
+			$synthesized_type.setLine($temp.line);
 			((NewArray)$synthesized_type).setExpression(new IntValue(Integer.parseInt($index.text),new IntType()));
 			if (Integer.parseInt($index.text) <= 0) {
         		$error_count = 1;
@@ -643,27 +744,60 @@ grammar Smoola;
         		// System.out.printf("Line:%d:Array length should not be zero or negative\n", $index.getLine());
         	}
 		}
-        |   'new ' ID '(' ')'
+        |   temp = 'new ' ID '(' ')'
 		{
 			$synthesized_type = new NewClass(new Identifier($ID.getText()));
+			$synthesized_type.setLine($temp.line);
 		}
-        |   'this' {$synthesized_type = new This();}
-        |   t = 'true' {$synthesized_type = new BooleanValue(Boolean.parseBoolean($t.getText()),new BooleanType());}
-        |   f = 'false' {$synthesized_type = new BooleanValue(Boolean.parseBoolean($f.getText()),new BooleanType());}
+		|   temp = 'this' 
+		{
+			$synthesized_type = new This();
+			$synthesized_type.setLine($temp.line);
+		}
+		|   t = 'true' 
+		{
+			$synthesized_type = new BooleanValue(Boolean.parseBoolean($t.getText()),new BooleanType());
+			$synthesized_type.setLine($t.line);
+		}
+		|   f = 'false' 
+		{
+			$synthesized_type = new BooleanValue(Boolean.parseBoolean($f.getText()),new BooleanType());
+			$synthesized_type.setLine($f.line);
+		}
         |	ID 
-		{$synthesized_type = new Identifier($ID.getText());}
+		{
+			$synthesized_type = new Identifier($ID.getText());
+			$synthesized_type.setLine($ID.getLine());
+		}
         |   ID '[' expression ']' 
-		{$synthesized_type = new ArrayCall(new Identifier($ID.getText()),$expression.synthesized_type);}
-        |	'(' expression ')'
-		{$synthesized_type = $expression.synthesized_type;}
+		{
+			$synthesized_type = new ArrayCall(new Identifier($ID.getText()),$expression.synthesized_type);
+			$synthesized_type.setLine($ID.getLine());
+		}
+        |	temp = '(' expression ')'
+		{
+			$synthesized_type = $expression.synthesized_type;
+			$synthesized_type.setLine($temp.line);
+		}
 		)
 	;
 	type returns[Type synthesized_type]:
-	    'int' {$synthesized_type = new IntType();}|
-	    'boolean' {$synthesized_type = new BooleanType();}|
-	    'string' {$synthesized_type = new StringType();}|
-	    'int' '[' ']' {$synthesized_type = new ArrayType();}|
-	    ID {$synthesized_type = new UserDefinedType();((UserDefinedType)$synthesized_type).setName(new Identifier($ID.getText()));} // Class declration? 
+	    temp = 'int' {
+			$synthesized_type = new IntType();
+		}|
+	    temp = 'boolean' {
+			$synthesized_type = new BooleanType();
+		}|
+	    temp = 'string' {
+			$synthesized_type = new StringType();
+		}|
+	    temp = 'int' '[' ']' {
+			$synthesized_type = new ArrayType();
+		}|
+	    ID {
+			$synthesized_type = new UserDefinedType();
+			((UserDefinedType)$synthesized_type).setName(new Identifier($ID.getText()));
+		}
 	;
     CONST_NUM:
 		[0-9]+

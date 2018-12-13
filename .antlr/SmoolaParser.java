@@ -1,4 +1,4 @@
-// Generated from /Users/amir/Desktop/810195402_810195427/Smoola.g4 by ANTLR 4.7.1
+// Generated from /Users/amir/Desktop/compiler-phase3/Smoola.g4 by ANTLR 4.7.1
 
 		import ast.*;
 		import ast.node.Program;
@@ -150,6 +150,16 @@ public class SmoolaParser extends Parser {
 				    while (it2.hasNext()) {
 				        Map.Entry pair2 = (Map.Entry)it2.next();
 				        System.out.printf("\t%s\n", pair2.getKey());
+				        if (pair2.getValue() != null && pair2.getValue() instanceof SymbolTableMethodItem) {
+				        	if (((SymbolTableMethodItem)(pair2.getValue())).getScope() != null) {
+				        		Iterator it3 =
+				        		((SymbolTableMethodItem)(pair2.getValue())).getScope().getItems().entrySet().iterator();
+					    		while (it3.hasNext()) {
+					        		Map.Entry pair3 = (Map.Entry)it3.next();
+					        		System.out.printf("\t\t%s\n", pair3.getKey());
+					        	}	
+				        	}
+				        }
 				    }
 				}
 			}
@@ -197,7 +207,9 @@ public class SmoolaParser extends Parser {
 							printErrors(errors);
 						} else {
 							VisitorImpl visitor = new VisitorImpl();
-							((ProgramContext)_localctx).program1.synthesized_type.accept(visitor);
+							//((ProgramContext)_localctx).program1.synthesized_type.accept(visitor);
+							VisitorType visitorType = new VisitorType(((ProgramContext)_localctx).program1.synthesized_table);
+							((ProgramContext)_localctx).program1.synthesized_type.accept(visitorType);
 						}
 					
 			}
@@ -258,7 +270,7 @@ public class SmoolaParser extends Parser {
 						try {
 			        		if (((Program1Context)_localctx).mainClass.synthesized_type == null) {
 			        			throw new Exception();
-			        		} //for What?!
+			        		}
 			        		_localctx.inherited_table.put(new SymbolTableClassItem(((Program1Context)_localctx).mainClass.synthesized_type.getName().getName(), null,
 			        			((Program1Context)_localctx).mainClass.synthesized_table, (((Program1Context)_localctx).mainClass!=null?(((Program1Context)_localctx).mainClass.start):null).getLine()));
 			        	}
@@ -289,7 +301,7 @@ public class SmoolaParser extends Parser {
 				    			// add class with new name
 				    			try{
 				    				// print("temp_" + ((Program1Context)_localctx).classDeclaration.synthesized_type.getName().getName() + Integer.toString(index++));
-				    				_localctx.inherited_table.put(new SymbolTableClassItem("temp_" +
+				    				_localctx.inherited_table.put(new SymbolTableClassItem("#temp_" +
 				    					((Program1Context)_localctx).classDeclaration.synthesized_type.getName().getName() + Integer.toString(index++), 
 										((((Program1Context)_localctx).classDeclaration.synthesized_type.getParentName() != null) ?
 										((Program1Context)_localctx).classDeclaration.synthesized_type.getParentName().getName() : null),
@@ -344,15 +356,15 @@ public class SmoolaParser extends Parser {
 								for(SymbolTableItem element : items) {
 									if (element instanceof SymbolTableMethodItem) {
 						        		try{
-						        			((SymbolTableClassItem)(pair.getValue())).putItem(new SymbolTableMethodItem("temp_" + ((SymbolTableMethodItem)element).getName() + Integer.toString(index++),
-						        				((SymbolTableMethodItem)element).getArgTypes(), ((SymbolTableMethodItem)element).getLine()));
+						        			((SymbolTableClassItem)(pair.getValue())).putItem(new SymbolTableMethodItem("#temp_" + ((SymbolTableMethodItem)element).getName() + Integer.toString(index++),
+						        				((SymbolTableMethodItem)element).getArgTypes(), ((SymbolTableMethodItem)element).getLine(), ((SymbolTableMethodItem)element).getScope()));
 						        		}catch(ItemAlreadyExistsException e3){
 
 						        		}
 						        		((SymbolTableClassItem)(pair.getValue())).removeItem(((SymbolTableMethodItem)element).getKey());
 					        		} else {
 					        			try{
-						        			((SymbolTableClassItem)(pair.getValue())).putItem(new SymbolTableVariableItemBase("temp_" + ((SymbolTableVariableItemBase)element).getName() + Integer.toString(index++),
+						        			((SymbolTableClassItem)(pair.getValue())).putItem(new SymbolTableVariableItemBase("#temp_" + ((SymbolTableVariableItemBase)element).getName() + Integer.toString(index++),
 						        				((SymbolTableVariableItemBase)element).getType(), index++, ((SymbolTableVariableItemBase)element).getLine()));
 						        		}catch(ItemAlreadyExistsException e3){
 						        			
@@ -360,13 +372,13 @@ public class SmoolaParser extends Parser {
 						        		((SymbolTableClassItem)(pair.getValue())).removeItem(((SymbolTableVariableItemBase)element).getKey());
 					        		}
 								}
-								//printSymbols(_localctx.synthesized_table.getItems());
+								// printSymbols(_localctx.synthesized_table.getItems());
 					    	}
 			        	}
 			        
 			setState(85);
 			match(EOF);
-			((Program1Context)_localctx).errors_ =  _localctx.errors;
+			((Program1Context)_localctx).errors_ =  _localctx.errors; printSymbols(_localctx.synthesized_table.getItems());
 			}
 		}
 		catch (RecognitionException re) {
@@ -418,6 +430,7 @@ public class SmoolaParser extends Parser {
 			((MainClassContext)_localctx).name = match(ID);
 
 						((MainClassContext)_localctx).synthesized_type =  new ClassDeclaration(new Identifier(((MainClassContext)_localctx).name.getText()), null);
+						_localctx.synthesized_type.setLine(((MainClassContext)_localctx).name.getLine());
 					
 			setState(91);
 			match(T__1);
@@ -450,7 +463,7 @@ public class SmoolaParser extends Parser {
 
 			        	try {
 			        		if (((MainClassContext)_localctx).mainMethod.getText() != null) {
-			        			_localctx.inherited_table.put(new SymbolTableMethodItem(((MainClassContext)_localctx).mainMethod.getText(),null,(((MainClassContext)_localctx).mainMethod!=null?((MainClassContext)_localctx).mainMethod.getLine():0)));	
+			        			_localctx.inherited_table.put(new SymbolTableMethodItem(((MainClassContext)_localctx).mainMethod.getText(),null,(((MainClassContext)_localctx).mainMethod!=null?((MainClassContext)_localctx).mainMethod.getLine():0),null));	
 			        		}	
 			        	}
 			        	catch(Exception e) {
@@ -542,7 +555,10 @@ public class SmoolaParser extends Parser {
 				}
 			}
 
-			((ClassDeclarationContext)_localctx).synthesized_type =  new ClassDeclaration(new Identifier(((ClassDeclarationContext)_localctx).name.getText()), ((((ClassDeclarationContext)_localctx).father_name != null) ? new Identifier(((ClassDeclarationContext)_localctx).father_name.getText()) : null));
+
+						((ClassDeclarationContext)_localctx).synthesized_type =  new ClassDeclaration(new Identifier(((ClassDeclarationContext)_localctx).name.getText()), ((((ClassDeclarationContext)_localctx).father_name != null) ? new Identifier(((ClassDeclarationContext)_localctx).father_name.getText()) : null));
+						_localctx.synthesized_type.setLine(((ClassDeclarationContext)_localctx).name.getLine());
+					
 			setState(114);
 			match(T__1);
 			setState(120);
@@ -564,7 +580,7 @@ public class SmoolaParser extends Parser {
 								_localctx.inherited_error_count++;
 								try{
 									//print("temp_" + ((ClassDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++));
-									_localctx.inherited_table.put(new SymbolTableVariableItemBase("temp_" + ((ClassDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++), ((ClassDeclarationContext)_localctx).varDeclaration.synthesized_type.getType(), _localctx.inherited_index++, (((ClassDeclarationContext)_localctx).varDeclaration!=null?(((ClassDeclarationContext)_localctx).varDeclaration.start):null).getLine()));
+									_localctx.inherited_table.put(new SymbolTableVariableItemBase("#temp_" + ((ClassDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++), ((ClassDeclarationContext)_localctx).varDeclaration.synthesized_type.getType(), _localctx.inherited_index++, (((ClassDeclarationContext)_localctx).varDeclaration!=null?(((ClassDeclarationContext)_localctx).varDeclaration.start):null).getLine()));
 								} catch(ItemAlreadyExistsException e2){
 
 								}
@@ -594,14 +610,14 @@ public class SmoolaParser extends Parser {
 							try {
 								if (((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type != null) {
 									_localctx.synthesized_type.addMethodDeclaration(((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type);
-									_localctx.inherited_table.put(new SymbolTableMethodItem(((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getName().getName(),((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getArgTypes(), (((ClassDeclarationContext)_localctx).methodDeclaration!=null?(((ClassDeclarationContext)_localctx).methodDeclaration.start):null).getLine()));	
+									_localctx.inherited_table.put(new SymbolTableMethodItem(((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getName().getName(),((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getArgTypes(), (((ClassDeclarationContext)_localctx).methodDeclaration!=null?(((ClassDeclarationContext)_localctx).methodDeclaration.start):null).getLine(), ((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_table));	
 								}	
 							}
 							catch(ItemAlreadyExistsException e) {
 								_localctx.inherited_error_count++;
 								try{
 									// print("temp_" + ((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getName().getName() + Integer.toString(_localctx.inherited_index++));
-									_localctx.inherited_table.put(new SymbolTableMethodItem("temp_" + ((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getName().getName() + Integer.toString(_localctx.inherited_index++),((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getArgTypes(), (((ClassDeclarationContext)_localctx).methodDeclaration!=null?(((ClassDeclarationContext)_localctx).methodDeclaration.start):null).getLine()));
+									_localctx.inherited_table.put(new SymbolTableMethodItem("#temp_" + ((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getName().getName() + Integer.toString(_localctx.inherited_index++),((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_type.getArgTypes(), (((ClassDeclarationContext)_localctx).methodDeclaration!=null?(((ClassDeclarationContext)_localctx).methodDeclaration.start):null).getLine(), ((ClassDeclarationContext)_localctx).methodDeclaration.synthesized_table));
 								}catch(ItemAlreadyExistsException e2){
 
 								}
@@ -623,6 +639,13 @@ public class SmoolaParser extends Parser {
 						((ClassDeclarationContext)_localctx).error_count =  _localctx.inherited_error_count;
 						((ClassDeclarationContext)_localctx).synthesized_index =  _localctx.inherited_index;
 						((ClassDeclarationContext)_localctx).errors_ =  _localctx.errors;
+						Iterator it2 = _localctx.synthesized_table.getItems().entrySet().iterator();
+					    while (it2.hasNext()) {
+					        Map.Entry pair2 = (Map.Entry)it2.next();
+				        	if (pair2.getValue() instanceof SymbolTableMethodItem) {
+				        		((SymbolTableMethodItem)(pair2.getValue())).setSymbolTable(_localctx.synthesized_table);
+				        	}
+				        }
 					
 			}
 		}
@@ -774,7 +797,7 @@ public class SmoolaParser extends Parser {
 								_localctx.inherited_error_count++;
 				    			try{
 				    				// print("temp_" + ((MethodDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++));
-				    				_localctx.synthesized_table.put(new SymbolTableVariableItemBase("temp_" + ((MethodDeclarationContext)_localctx).n1.getText() + Integer.toString(_localctx.inherited_index++),
+				    				_localctx.synthesized_table.put(new SymbolTableVariableItemBase("#temp_" + ((MethodDeclarationContext)_localctx).n1.getText() + Integer.toString(_localctx.inherited_index++),
 				    					((MethodDeclarationContext)_localctx).type.synthesized_type, _localctx.inherited_index++, (((MethodDeclarationContext)_localctx).n1!=null?((MethodDeclarationContext)_localctx).n1.getLine():0)));
 				    			}catch(ItemAlreadyExistsException e2){
 
@@ -805,7 +828,7 @@ public class SmoolaParser extends Parser {
 									_localctx.inherited_error_count++;
 					    			try{
 					    				// print("temp_" + ((MethodDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++));
-					    				_localctx.synthesized_table.put(new SymbolTableVariableItemBase("temp_" + ((MethodDeclarationContext)_localctx).n2.getText() + Integer.toString(_localctx.inherited_index++),
+					    				_localctx.synthesized_table.put(new SymbolTableVariableItemBase("#temp_" + ((MethodDeclarationContext)_localctx).n2.getText() + Integer.toString(_localctx.inherited_index++),
 					    					((MethodDeclarationContext)_localctx).type.synthesized_type, _localctx.inherited_index++, (((MethodDeclarationContext)_localctx).n2!=null?((MethodDeclarationContext)_localctx).n2.getLine():0)));
 					    			}catch(ItemAlreadyExistsException e2){
 
@@ -852,7 +875,7 @@ public class SmoolaParser extends Parser {
 				    			_localctx.inherited_error_count++;
 				    			try{
 				    				// print("temp_" + ((MethodDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++));
-				    				_localctx.synthesized_table.put(new SymbolTableVariableItemBase("temp_" + ((MethodDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++), ((MethodDeclarationContext)_localctx).varDeclaration.synthesized_type.getType(), _localctx.inherited_index++, (((MethodDeclarationContext)_localctx).varDeclaration!=null?(((MethodDeclarationContext)_localctx).varDeclaration.start):null).getLine()));
+				    				_localctx.synthesized_table.put(new SymbolTableVariableItemBase("#temp_" + ((MethodDeclarationContext)_localctx).varDeclaration.synthesized_type.getIdentifier().getName() + Integer.toString(_localctx.inherited_index++), ((MethodDeclarationContext)_localctx).varDeclaration.synthesized_type.getType(), _localctx.inherited_index++, (((MethodDeclarationContext)_localctx).varDeclaration!=null?(((MethodDeclarationContext)_localctx).varDeclaration.start):null).getLine()));
 				    			}catch(ItemAlreadyExistsException e2){
 
 				    			}
@@ -1236,6 +1259,7 @@ public class SmoolaParser extends Parser {
 
 	public static class StatementWriteContext extends ParserRuleContext {
 		public Write synthesized_type;
+		public Token e;
 		public ExpressionContext expression;
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
@@ -1253,14 +1277,17 @@ public class SmoolaParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(241);
-			match(T__17);
+			((StatementWriteContext)_localctx).e = match(T__17);
 			setState(242);
 			((StatementWriteContext)_localctx).expression = expression();
 			setState(243);
 			match(T__4);
 			setState(244);
 			match(T__8);
-			((StatementWriteContext)_localctx).synthesized_type =  new Write(((StatementWriteContext)_localctx).expression.synthesized_type);
+
+						((StatementWriteContext)_localctx).synthesized_type =  new Write(((StatementWriteContext)_localctx).expression.synthesized_type);
+						_localctx.synthesized_type.setLine((((StatementWriteContext)_localctx).e!=null?((StatementWriteContext)_localctx).e.getLine():0));
+					
 			}
 		}
 		catch (RecognitionException re) {

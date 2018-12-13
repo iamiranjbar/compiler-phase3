@@ -1,4 +1,4 @@
-// Generated from /Users/amir/Desktop/810195402_810195427/Smoola.g4 by ANTLR 4.7.1
+// Generated from /Users/amir/Desktop/compiler-phase3/Smoola.g4 by ANTLR 4.7.1
 
 		import ast.*;
 		import ast.node.Program;
@@ -132,6 +132,16 @@ public class SmoolaLexer extends Lexer {
 				    while (it2.hasNext()) {
 				        Map.Entry pair2 = (Map.Entry)it2.next();
 				        System.out.printf("\t%s\n", pair2.getKey());
+				        if (pair2.getValue() != null && pair2.getValue() instanceof SymbolTableMethodItem) {
+				        	if (((SymbolTableMethodItem)(pair2.getValue())).getScope() != null) {
+				        		Iterator it3 =
+				        		((SymbolTableMethodItem)(pair2.getValue())).getScope().getItems().entrySet().iterator();
+					    		while (it3.hasNext()) {
+					        		Map.Entry pair3 = (Map.Entry)it3.next();
+					        		System.out.printf("\t\t%s\n", pair3.getKey());
+					        	}	
+				        	}
+				        }
 				    }
 				}
 			}
