@@ -179,6 +179,18 @@ public class VisitorType implements Visitor {
 		}
 	}
 
+	private boolean findClassName(String name) {
+		try{
+			if (((SymbolTableClassItem)(symbolTable.get(name))).getKey() != null) {
+				return true;
+			} else {
+				return false;
+			}
+		} catch(ItemNotFoundException e) {
+			return false;
+		}	
+	}
+
 	private boolean isSubType(Type a, Type b) {
 		if ((a instanceof IntType && b instanceof IntType)
 			|| (a instanceof StringType && b instanceof StringType)
@@ -380,10 +392,19 @@ public class VisitorType implements Visitor {
         //System.out.println(methodCall.toString());
         int error = 0;
         if (methodCall.getInstance() != null) {
-            methodCall.getInstance().accept(this);   
+            methodCall.getInstance().accept(this);
+            if (!(methodCall.getInstance().getType() instanceof UserDefinedType)) {
+               	error++;
+            } else if (!findClassName(
+            	((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
+            	error++;
+            	System.out.printf("Line:%d:class %s is not declared\n", methodCall.getLine(),
+	            		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
+            }   
         }
         if (methodCall.getMethodName() != null) {
-            methodCall.getMethodName().accept(this);   
+            methodCall.getMethodName().accept(this);
+               
         }
         if (findMethodArgs(methodCall.getMethodName().getName()).size() == methodCall.getArgs().size()) {
 	        for (int i = 0; i < methodCall.getArgs().size(); ++i) {
@@ -429,11 +450,17 @@ public class VisitorType implements Visitor {
         //System.out.println(newClass.toString());
         if (newClass.getClassName() != null) {
             newClass.getClassName().accept(this);
-            UserDefinedType temp = new UserDefinedType();
-            temp.setClassDeclaration(new ClassDeclaration(
-            	new Identifier(newClass.getClassName().getName()),
-            	new Identifier(findFather(newClass.getClassName().getName()))));
-            newClass.setType(temp);
+            if (findClassName(newClass.getClassName().getName())) {
+            	UserDefinedType temp = new UserDefinedType();
+	            temp.setClassDeclaration(new ClassDeclaration(
+	            	new Identifier(newClass.getClassName().getName()),
+	            	new Identifier(findFather(newClass.getClassName().getName()))));
+	            newClass.setType(temp);	
+            } else {
+            	System.out.printf("Line:%d:class %s is not declared\n", newClass.getLine(),
+	            		newClass.getClassName().getName());
+	            newClass.setType(new NoType());
+            }
         }
     }
 
