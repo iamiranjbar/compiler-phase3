@@ -1,19 +1,20 @@
 class MainClass {
     def main(): int {
-        return new Test2().method4();
+        return (new Test2()).method2();
     }
 }
 
 class Test2 extends Test1 {
     var variable : int[];
-    var cc : Test1;
 
     def method2(): int {
-        i = 10;
-        cc = new Test1();
-        #i = i.u();
+        i = this.nn(new Test1()).method3();
         variable = new int[10];
         return i;
+    }
+
+    def nn(d : int) : string{
+        return d;
     }
 
     def method3(): int {
@@ -25,19 +26,19 @@ class Test2 extends Test1 {
         else
             b = false;
 
-        while(a <> 0) {
+        while(((new Test2()).method4() <> (new Test1()).method1()) || true) {
             a = a - 1;
         }
 
-        writeln(false);
-        return 0;
+        writeln("Hello kiki!");
+        return this.method3();
     }
 
-    def method4(): string {
+    def method4(): int {
         var arr : int[];
         arr = new int[666];
-        writeln(arr.length + arr[arr]);
-        return "f";
+        writeln(arr.length);
+        return 0;
     }
 }
 
@@ -52,10 +53,3 @@ class Test1 {
     }
 }
 
-class A extends B{
-
-}
-
-class B extends A{
-    
-}
