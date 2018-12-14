@@ -71,6 +71,14 @@ grammar Smoola;
 		{ArrayList<ErrorItem> errors = new ArrayList<>();}
 		program1 [new SymbolTable(), 0, errors]
 		{
+			// for (int i =0; i < $program1.synthesized_unres.size(); i++){
+			// 	for (int j = 0; j < $program1.synthesized_type.getClasses().size(); j++){
+			// 		if ($program1.synthesized_unres.get(i).getName().getName() == $program1.synthesized_type.getClasses().get(j).getName().getName()){
+			// 			$program1.synthesized_unres.get(i).setClassDeclaration($program1.synthesized_type.getClasses().get(j));
+			// 		}
+			// 	}
+			// }
+
 			errors = $program1.errors_;
 			// print($program1.error_count);
 			if ($program1.synthesized_table.getItemsSize() == 0 || $program1.error_count > 0) {
@@ -89,8 +97,13 @@ grammar Smoola;
 		}
 	;
     program1 [SymbolTable inherited_table, int inherited_error_count, ArrayList<ErrorItem> errors] returns
-    	[ArrayList<ErrorItem> errors_, Program synthesized_type,int error_count, SymbolTable synthesized_table]:
-        {int index = 0; $synthesized_type = new Program();} mainClass [new SymbolTable(inherited_table)]
+    	[ArrayList<ErrorItem> errors_, Program synthesized_type,int error_count, SymbolTable synthesized_table, ArrayList<UserDefinedType> synthesized_unres]:
+        {
+			int index = 0; 
+			$synthesized_type = new Program();
+			$synthesized_unres = new ArrayList<UserDefinedType>();
+		} 
+			mainClass [new SymbolTable(inherited_table)]
 		{
 			$synthesized_type.setMainClass($mainClass.synthesized_type);
 			try {
@@ -104,7 +117,7 @@ grammar Smoola;
         			
         	}
 		} 
-		(classDeclaration[$inherited_error_count ,index , new SymbolTable(inherited_table), $errors]
+		(classDeclaration[$inherited_error_count ,index , new SymbolTable(inherited_table), $errors, $synthesized_unres]
 		 {
 		 	$errors = $classDeclaration.errors_; 
 		 	index = $classDeclaration.synthesized_index;
@@ -134,9 +147,14 @@ grammar Smoola;
     				$classDeclaration.synthesized_type.getName().getName())));
     			// System.out.printf("Line:%d:Redefinition of class %s\n", $classDeclaration.start.getLine(), $classDeclaration.synthesized_type.getName().getName());
     		}
- 
+		 {
+			$synthesized_unres = $classDeclaration.synthesized_unres;
+		 }
 		 })*
-		  {$synthesized_table = $inherited_table; $error_count = $inherited_error_count;}
+		{
+			$synthesized_table = $inherited_table; 
+			$error_count = $inherited_error_count;
+		}
         {
         	Iterator it = $synthesized_table.getItems().entrySet().iterator();
 		    while (it.hasNext()) {
@@ -219,13 +237,14 @@ grammar Smoola;
 			$synthesized_table = $inherited_table;
 		}
     ;
-    classDeclaration [int inherited_error_count, int inherited_index, SymbolTable inherited_table, ArrayList<ErrorItem> errors] returns [ArrayList<ErrorItem> errors_, int synthesized_index,int error_count, ClassDeclaration synthesized_type, SymbolTable synthesized_table]:
+	classDeclaration [int inherited_error_count, int inherited_index, SymbolTable inherited_table, ArrayList<ErrorItem> errors, ArrayList<UserDefinedType> inherited_unres]
+	returns [ArrayList<ErrorItem> errors_, int synthesized_index,int error_count, ClassDeclaration synthesized_type, SymbolTable synthesized_table, ArrayList<UserDefinedType> synthesized_unres]:
         'class' name = ID ('extends' father_name = ID)? 
 		{
 			$synthesized_type = new ClassDeclaration(new Identifier($name.getText()), (($father_name != null) ? new Identifier($father_name.getText()) : null));
 			$synthesized_type.setLine($name.getLine());
 		}
-		'{' (varDeclaration
+		'{' (varDeclaration[$inherited_unres]
 		{
 			try {
 				if ($varDeclaration.synthesized_type != null) {
@@ -245,8 +264,11 @@ grammar Smoola;
 				$errors.add(new ErrorItem(new Integer($varDeclaration.start.getLine()), String.format("Line:%d:Redefinition of variable %s\n",
     								$varDeclaration.start.getLine(), $varDeclaration.synthesized_type.getIdentifier().getName())));
 			}
+			{
+				$inherited_unres = $varDeclaration.synthesized_unres;
+			}
 		})* 
-		(methodDeclaration[$inherited_error_count, $inherited_index, $inherited_table, $errors]
+		(methodDeclaration[$inherited_error_count, $inherited_index, $inherited_table, $errors,$inherited_unres]
 		{
 			$errors = $methodDeclaration.errors_;
 			$inherited_index = $methodDeclaration.synthesized_index;
@@ -274,6 +296,9 @@ grammar Smoola;
 				$errors.add(new ErrorItem(new Integer($methodDeclaration.start.getLine()), String.format("Line:%d:Redefinition of method %s\n",
     								$methodDeclaration.start.getLine(), $methodDeclaration.synthesized_type.getName().getName())));
 			}
+			{
+				$inherited_unres = $methodDeclaration.synthesized_unres;
+			}
 		})* '}'
 		{
 			$synthesized_table = $inherited_table;
@@ -290,20 +315,22 @@ grammar Smoola;
 		}
 		
     ;
-    varDeclaration returns [VarDeclaration synthesized_type]:
-        'var' ID ':' type ';' 
+    varDeclaration[ArrayList<UserDefinedType> inherited_unres] returns [VarDeclaration synthesized_type,ArrayList<UserDefinedType> synthesized_unres]:
+        'var' ID ':' type[$inherited_unres] ';' 
 		{
 			$synthesized_type = new VarDeclaration(new Identifier($ID.getText()),$type.synthesized_type);
 			$synthesized_type.setLine($ID.getLine());
+			$synthesized_unres = $type.synthesized_unres;
 		}
     ;
-    methodDeclaration[int inherited_error_count, int inherited_index, SymbolTable inherited_table, ArrayList<ErrorItem> errors] returns [ArrayList<ErrorItem> errors_, int synthesized_index,int error_count, SymbolTable synthesized_table,MethodDeclaration synthesized_type]:
+	methodDeclaration[int inherited_error_count, int inherited_index, SymbolTable inherited_table, ArrayList<ErrorItem> errors, ArrayList<UserDefinedType> inherited_unres]
+	returns [ArrayList<ErrorItem> errors_, int synthesized_index,int error_count, SymbolTable synthesized_table,MethodDeclaration synthesized_type, ArrayList<UserDefinedType> synthesized_unres]:
 		{$synthesized_table = new SymbolTable();}
 		'def' name = ID {
 			$synthesized_type = new MethodDeclaration(new Identifier($name.getText()));
 			$synthesized_type.setLine($name.getLine());
 		}
-		('(' ')' | ('(' n1 = ID ':' type 
+		('(' ')' | ('(' n1 = ID ':' t1 = type[$inherited_unres]
 		{
 			$synthesized_type.addArg(new VarDeclaration(new Identifier($n1.getText()),$type.synthesized_type));
 			try{
@@ -320,8 +347,9 @@ grammar Smoola;
     			// System.out.printf("Line:%d:Redefinition of variable ‬‬%s\n", $n1.line, $n1.getText());
     			$errors.add(new ErrorItem($n1.line, String.format("Line:%d:Redefinition of variable %s\n", $n1.line, $n1.getText())));
 			}
+			$inherited_unres = $t1.synthesized_unres;
 		}
-		(',' n2 = ID ':' type 
+		(',' n2 = ID ':' t2 = type[$inherited_unres] 
 		{
 			$synthesized_type.addArg(new VarDeclaration(new Identifier($n2.getText()),$type.synthesized_type));
 			try{
@@ -338,9 +366,10 @@ grammar Smoola;
     			// System.out.printf("Line:%d:Redefinition of variable ‬‬%s\n", $n2.line, $n2.getText());
     			$errors.add(new ErrorItem($n2.line, String.format("Line:%d:Redefinition of variable %s\n", $n2.line, $n2.getText())));
 			}
+			$inherited_unres = $t2.synthesized_unres;
 		})* ')'))
-		':' type {$synthesized_type.setReturnType($type.synthesized_type);} '{'  
-		(varDeclaration
+		':' t3 = type[$inherited_unres] {$synthesized_type.setReturnType($type.synthesized_type); $inherited_unres = $t3.synthesized_unres;} '{'  
+		(varDeclaration[$inherited_unres]
 		{	
 			try {
     			if ($varDeclaration.synthesized_type != null) {
@@ -359,9 +388,11 @@ grammar Smoola;
     			// System.out.printf("Line:%d:Redefinition of variable ‬‬%s\n", $varDeclaration.start.getLine(), $varDeclaration.synthesized_type.getIdentifier().getName());	
     			$errors.add(new ErrorItem($varDeclaration.start.getLine(), String.format("Line:%d:Redefinition of variable %s\n",
     				$varDeclaration.start.getLine(), $varDeclaration.synthesized_type.getIdentifier().getName())));
-    		}
+			}
+			$inherited_unres = $varDeclaration.synthesized_unres;
 		}
 		)* 
+		{$synthesized_unres = $inherited_unres;}
 		statements 
 		{
 			for (int i =0 ; i < $statements.synthesized_type.size(); ++i){
@@ -787,22 +818,28 @@ grammar Smoola;
 		}
 		)
 	;
-	type returns[Type synthesized_type]:
+	type[ArrayList<UserDefinedType> inherited_unres] returns[Type synthesized_type,ArrayList<UserDefinedType> synthesized_unres]:
 	    temp = 'int' {
 			$synthesized_type = new IntType();
+			$synthesized_unres = $inherited_unres;
 		}|
 	    temp = 'boolean' {
 			$synthesized_type = new BooleanType();
+			$synthesized_unres = $inherited_unres;
 		}|
 	    temp = 'string' {
 			$synthesized_type = new StringType();
+			$synthesized_unres = $inherited_unres;
 		}|
 	    temp = 'int' '[' ']' {
 			$synthesized_type = new ArrayType();
+			$synthesized_unres = $inherited_unres;
 		}|
 	    ID {
 			$synthesized_type = new UserDefinedType();
 			((UserDefinedType)$synthesized_type).setName(new Identifier($ID.getText()));
+			$synthesized_unres = $inherited_unres;
+			$synthesized_unres.add((UserDefinedType)$synthesized_type);
 		}
 	;
     CONST_NUM:
