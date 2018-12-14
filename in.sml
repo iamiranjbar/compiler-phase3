@@ -8,12 +8,13 @@ class Test2 extends Test1 {
     var variable : int[];
 
     def method2(): int {
-        i = this.nn(new Test1()).method3();
+        var i: string;
+        i = this.nn(new Test1().method1());
         variable = new int[10];
-        return i;
+        return 1;
     }
 
-    def nn(d : int) : string{
+    def nn(d : string) : string{
         return d;
     }
 
@@ -26,7 +27,7 @@ class Test2 extends Test1 {
         else
             b = false;
 
-        while(((new Test2()).method4() <> (new Test1()).method1()) || true) {
+        while(true) {
             a = a - 1;
         }
 
@@ -44,11 +45,11 @@ class Test2 extends Test1 {
 
 class Test1 {
     #var variable : int[];
-    var i : int;
+    var i : Test2;
     def method1() : string {
         var j : string;
         j = "hello world!";
-	writeln(j);
+	    writeln(j);
         return j;
     }
 }

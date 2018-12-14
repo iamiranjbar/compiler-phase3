@@ -1,5 +1,9 @@
 grammar Smoola;
 	@members{
+		void printArr(ArrayList<UserDefinedType> l){
+			for (int i = 0; i < l.size(); i++)
+				print(l.get(i).getName().getName());
+		}
 
 		class ErrorItem {
 		   	public Integer line;
@@ -71,13 +75,14 @@ grammar Smoola;
 		{ArrayList<ErrorItem> errors = new ArrayList<>();}
 		program1 [new SymbolTable(), 0, errors]
 		{
-			// for (int i =0; i < $program1.synthesized_unres.size(); i++){
-			// 	for (int j = 0; j < $program1.synthesized_type.getClasses().size(); j++){
-			// 		if ($program1.synthesized_unres.get(i).getName().getName() == $program1.synthesized_type.getClasses().get(j).getName().getName()){
-			// 			$program1.synthesized_unres.get(i).setClassDeclaration($program1.synthesized_type.getClasses().get(j));
-			// 		}
-			// 	}
-			// }
+			// printArr($program1.synthesized_unres);
+			for (int i =0; i < $program1.synthesized_unres.size(); i++){
+				for (int j = 0; j < $program1.synthesized_type.getClasses().size(); j++){
+					if ($program1.synthesized_unres.get(i).getName().getName() == $program1.synthesized_type.getClasses().get(j).getName().getName()){
+						$program1.synthesized_unres.get(i).setClassDeclaration($program1.synthesized_type.getClasses().get(j));
+					}
+				}
+			}
 
 			errors = $program1.errors_;
 			// print($program1.error_count);
@@ -94,6 +99,8 @@ grammar Smoola;
 				VisitorType visitorType = new VisitorType($program1.synthesized_table);
 				$program1.synthesized_type.accept(visitorType);
 			}
+			// VisitorImpl visitor = new VisitorImpl();
+			// $program1.synthesized_type.accept(visitor);
 		}
 	;
     program1 [SymbolTable inherited_table, int inherited_error_count, ArrayList<ErrorItem> errors] returns
@@ -101,7 +108,7 @@ grammar Smoola;
         {
 			int index = 0; 
 			$synthesized_type = new Program();
-			$synthesized_unres = new ArrayList<UserDefinedType>();
+			ArrayList<UserDefinedType> unres = new ArrayList<UserDefinedType>();
 		} 
 			mainClass [new SymbolTable(inherited_table)]
 		{
@@ -117,7 +124,7 @@ grammar Smoola;
         			
         	}
 		} 
-		(classDeclaration[$inherited_error_count ,index , new SymbolTable(inherited_table), $errors, $synthesized_unres]
+		(classDeclaration[$inherited_error_count ,index , new SymbolTable(inherited_table), $errors, unres]
 		 {
 		 	$errors = $classDeclaration.errors_; 
 		 	index = $classDeclaration.synthesized_index;
@@ -148,7 +155,8 @@ grammar Smoola;
     			// System.out.printf("Line:%d:Redefinition of class %s\n", $classDeclaration.start.getLine(), $classDeclaration.synthesized_type.getName().getName());
     		}
 		 {
-			$synthesized_unres = $classDeclaration.synthesized_unres;
+			unres = $classDeclaration.synthesized_unres;
+			// printArr($classDeclaration.synthesized_unres);
 		 }
 		 })*
 		{
@@ -208,7 +216,7 @@ grammar Smoola;
 		    	}
         	}
         } 
-		  EOF {$errors_ = $errors; printSymbols($synthesized_table.getItems());}
+	EOF {$errors_ = $errors; /*printSymbols($synthesized_table.getItems());*/$synthesized_unres = unres;}
     ;
     mainClass [SymbolTable inherited_table] returns [ClassDeclaration synthesized_type, SymbolTable synthesized_table]:
         // name should be checked later
@@ -243,6 +251,7 @@ grammar Smoola;
 		{
 			$synthesized_type = new ClassDeclaration(new Identifier($name.getText()), (($father_name != null) ? new Identifier($father_name.getText()) : null));
 			$synthesized_type.setLine($name.getLine());
+			// printArr($inherited_unres);
 		}
 		'{' (varDeclaration[$inherited_unres]
 		{
@@ -301,6 +310,7 @@ grammar Smoola;
 			}
 		})* '}'
 		{
+			$synthesized_unres = $inherited_unres;
 			$synthesized_table = $inherited_table;
 			$error_count = $inherited_error_count;
 			$synthesized_index = $inherited_index;
@@ -838,8 +848,8 @@ grammar Smoola;
 	    ID {
 			$synthesized_type = new UserDefinedType();
 			((UserDefinedType)$synthesized_type).setName(new Identifier($ID.getText()));
+			$inherited_unres.add((UserDefinedType)$synthesized_type);
 			$synthesized_unres = $inherited_unres;
-			$synthesized_unres.add((UserDefinedType)$synthesized_type);
 		}
 	;
     CONST_NUM:
