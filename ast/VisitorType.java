@@ -15,6 +15,8 @@ import ast.Type.PrimitiveType.*;
 import ast.Type.ArrayType.*;
 import ast.Type.UserDefinedType.*;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.List;
 
 
 public class VisitorType implements Visitor {
@@ -64,6 +66,52 @@ public class VisitorType implements Visitor {
 					return res;
 				}
 				return null;
+			}
+		}
+	}
+
+	private void completeTypeOfClass(List<ClassDeclaration> classes) {
+		for(Map.Entry<String, SymbolTableItem> entryi : symbolTable.getItems().entrySet()) {
+			try{
+				current = ((SymbolTableClassItem)(symbolTable.get(entryi.getKey()))).getSymbolTable();
+			} catch (Exception e) {}
+			// System.out.println(entryi.getKey());
+			for(Map.Entry<String, SymbolTableItem> entry : current.getItems().entrySet()) {
+			    // System.out.println(entry.getKey());
+			    if (entry.getValue() instanceof SymbolTableVariableItemBase
+			    	&& ((SymbolTableVariableItemBase)entry.getValue()).getType() instanceof UserDefinedType) {
+			    	for (int j = 0; j < classes.size(); j++){
+						if (((UserDefinedType)((SymbolTableVariableItemBase)entry.getValue()).getType()).getName().getName().equals(
+							classes.get(j).getName().getName())){
+							// System.out.println(entry.getKey());
+							((UserDefinedType)((SymbolTableVariableItemBase)entry.getValue()).getType()).setClassDeclaration(
+								classes.get(j));
+						}
+					}
+				} else if (entry.getValue() instanceof SymbolTableMethodItem) {
+					SymbolTable scope = null;
+					try{
+						scope = ((SymbolTableMethodItem)(current.get(entry.getKey()))).getScope();
+					} catch (Exception e) {}
+					if (scope != null) {
+						for(Map.Entry<String, SymbolTableItem> entry2 : scope.getItems().entrySet()) {
+						    // System.out.println("\t" + entry2.getKey());
+						    if (entry2.getValue() instanceof SymbolTableVariableItemBase
+						    	&& ((SymbolTableVariableItemBase)entry2.getValue()).getType() instanceof UserDefinedType) {
+						    	// System.out.println(">>>>>>>>>>>>>>>> "+entry2.getKey());
+						    	// System.out.println();
+						    	for (int k = 0; k < classes.size(); k++){
+									if (((UserDefinedType)((SymbolTableVariableItemBase)entry2.getValue()).getType()).getName().getName().equals(
+										classes.get(k).getName().getName())){
+										// System.out.println(">>>>>>>>>>>>>>>> "+entry2.getKey());
+										((UserDefinedType)((SymbolTableVariableItemBase)entry2.getValue()).getType()).setClassDeclaration(
+											classes.get(k));
+									}	
+								}
+							}
+		    			}
+		    		}
+				}
 			}
 		}
 	}
@@ -255,6 +303,9 @@ public class VisitorType implements Visitor {
 			}
 			String aName = ((UserDefinedType)a).getClassDeclaration().getName().getName();
 			String bName = ((UserDefinedType)b).getClassDeclaration().getName().getName();
+			if (aName.equals(bName)) {
+				return true;
+			}
 			while (!findFather(aName).equals(bName)) {
 				if (findFather(aName).equals("")
 					|| findFather(aName).equals(((UserDefinedType)a).getClassDeclaration().getName().getName())) {
@@ -274,6 +325,7 @@ public class VisitorType implements Visitor {
     @Override
     public void visit(Program program) {
         //TODO: implement appropriate visit functionality
+        completeTypeOfClass(program.getClasses());
         if (program.getMainClass() != null) {
             program.getMainClass().accept(this);   
         }
@@ -343,6 +395,11 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(varDeclaration.toString());
         //System.out.println(varDeclaration.getIdentifier().toString());
+        // if (varDeclaration.getType() instanceof UserDefinedType) {
+        // 	String id = varDeclaration.getIdentifier().getName();
+        // 	((UserDefinedType)findIdType(id)).setClassDeclaration(
+        // 		((UserDefinedType)varDeclaration.getType()).getClassDeclaration());
+        // }
     }
 
     @Override

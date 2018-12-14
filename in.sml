@@ -21,7 +21,9 @@ class Test2 extends Test1 {
     def method3(): int {
         var a:int;
         var b:boolean;
+        #var i : Test2;
         #a = b;
+        i = new Test2();
         if(a == 2) then
             b = true && false;
         else

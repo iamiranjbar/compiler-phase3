@@ -216,7 +216,7 @@ grammar Smoola;
 		    	}
         	}
         } 
-	EOF {$errors_ = $errors; /*printSymbols($synthesized_table.getItems());*/$synthesized_unres = unres;}
+	EOF {$errors_ = $errors; printSymbols($synthesized_table.getItems());$synthesized_unres = unres;}
     ;
     mainClass [SymbolTable inherited_table] returns [ClassDeclaration synthesized_type, SymbolTable synthesized_table]:
         // name should be checked later
