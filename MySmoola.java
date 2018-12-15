@@ -11,11 +11,11 @@ public class MySmoola {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SmoolaParser parser = new SmoolaParser(tokens);
         Program p = parser.program().p;
-        if (parser.program().error_count == 0) {
-        	System.out.println("alio");
-        	VisitorType v = new VisitorType(parser.program().synthesized_table);
-        	p.accept(v);	
-        }
+        // if (parser.program().error_count == 0) {
+        // 	System.out.println("alio");
+        // 	VisitorType v = new VisitorType(parser.program().synthesized_table);
+        // 	p.accept(v);	
+        // }
         // System.out.println("aliop");
     }
 }

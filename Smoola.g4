@@ -110,8 +110,8 @@ grammar Smoola;
 			} else {
 				// VisitorImpl visitor = new VisitorImpl();
 				//$program1.synthesized_type.accept(visitor);
-				// VisitorType visitorType = new VisitorType($program1.synthesized_table);
-				// $program1.synthesized_type.accept(visitorType);
+				VisitorType visitorType = new VisitorType($program1.synthesized_table);
+				$program1.synthesized_type.accept(visitorType);
 				$p = $program1.synthesized_type;
 			}
 			// VisitorImpl visitor = new VisitorImpl();

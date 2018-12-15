@@ -60,7 +60,7 @@ class Test1 extends Test5 {
 }
 
 class Test5 {
-	def method2(): int {
+	def method2u(): int {
         var i: string;
         var a: Test1;
         a = new Test1();
