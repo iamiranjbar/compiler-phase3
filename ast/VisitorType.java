@@ -326,9 +326,9 @@ public class VisitorType implements Visitor {
     public void visit(Program program) {
         //TODO: implement appropriate visit functionality
         completeTypeOfClass(program.getClasses());
-        if (program.getMainClass() != null) {
-            program.getMainClass().accept(this);   
-        }
+        // if (program.getMainClass() != null) {
+        //     program.getMainClass().accept(this);   
+        // }
         for (int i = 0; i < program.getClasses().size(); ++i) {
         	try{
         		currentName = program.getClasses().get(i).getName().getName();
