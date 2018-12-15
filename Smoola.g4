@@ -71,7 +71,7 @@ grammar Smoola;
 		import java.util.ArrayList;
 	}
 
-	program:
+	program returns[int error_count, Program p,SymbolTable synthesized_table]:
 		{
 			ArrayList<ErrorItem> errors = new ArrayList<>();
 			SymbolTable symbolTable = new SymbolTable();
@@ -96,8 +96,9 @@ grammar Smoola;
 					}
 				}
 			}
-
+			$synthesized_table = $program1.synthesized_table;
 			errors = $program1.errors_;
+			$error_count = $program1.error_count;
 			// print($program1.error_count);
 			if ($program1.synthesized_table.getItemsSize() == 0 || $program1.error_count > 0) {
 				if ($program1.synthesized_table.getItemsSize() == 0) {
@@ -107,10 +108,11 @@ grammar Smoola;
 				}
 				printErrors(errors);
 			} else {
-				VisitorImpl visitor = new VisitorImpl();
+				// VisitorImpl visitor = new VisitorImpl();
 				//$program1.synthesized_type.accept(visitor);
-				VisitorType visitorType = new VisitorType($program1.synthesized_table);
-				$program1.synthesized_type.accept(visitorType);
+				// VisitorType visitorType = new VisitorType($program1.synthesized_table);
+				// $program1.synthesized_type.accept(visitorType);
+				$p = $program1.synthesized_type;
 			}
 			// VisitorImpl visitor = new VisitorImpl();
 			// $program1.synthesized_type.accept(visitor);
