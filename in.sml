@@ -1,6 +1,6 @@
 class MainClass {
     def main(): int {
-        return (new Test2()).method2();
+        return (new Test0()).method2();
     }
 }
 

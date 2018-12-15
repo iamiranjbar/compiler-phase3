@@ -540,21 +540,24 @@ public class VisitorType implements Visitor {
         int error = 0;
         if (methodCall.getInstance() != null) {
             methodCall.getInstance().accept(this);
-            if (!(methodCall.getInstance().getType() instanceof UserDefinedType)) {
+            if (!(methodCall.getInstance().getType() instanceof UserDefinedType
+            	|| methodCall.getInstance().getType() instanceof NoType)) {
                	error++;
                	System.out.printf("Line:%d:you can not call method %s from primitive type.\n", methodCall.getLine(),
 	            		methodCall.getMethodName().getName());
-            } else if (!findClassName(
-            	((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
-            	error++;
-            	System.out.printf("Line:%d:class %s is not declared\n", methodCall.getLine(),
-	            		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
+            } else if (methodCall.getInstance().getType() instanceof UserDefinedType) {
+            	if(!findClassName(((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
+	            	error++;
+	            	System.out.printf("Line:%d:class %s is not declared\n", methodCall.getLine(),
+		            		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
+	            }
             }   
         }
         if (methodCall.getMethodName() != null) {
             methodCall.getMethodName().accept(this);
             if (error == 0) {
-               	if (!findMethodName(methodCall.getMethodName().getName(),
+               	if (methodCall.getInstance().getType() instanceof UserDefinedType
+               		&& !findMethodName(methodCall.getMethodName().getName(),
                		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName())) {
                		error++;
                		System.out.printf("Line:%d:there is no method named %s in class %s\n", methodCall.getLine(),
@@ -564,30 +567,32 @@ public class VisitorType implements Visitor {
             }   
         }
         if (error == 0) {
-        	ArrayList<Type> symbolOfMethod = findMethodArgs(methodCall.getMethodName().getName(),
-	        	((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
-	        if (symbolOfMethod.size() == methodCall.getArgs().size()) {
-		        for (int i = 0; i < methodCall.getArgs().size(); ++i) {
-		        	methodCall.getArgs().get(i).accept(this);
-		        	if (!isSubType(methodCall.getArgs().get(i).getType(), symbolOfMethod.get(i))) {
-		        		error++;
-		        		System.out.printf("Line:%d:%dth arg of %s's type must be %s\n",
-		        			methodCall.getArgs().get(i).getLine(), i, methodCall.getMethodName().getName(),
-		        			symbolOfMethod.get(i));
-		        	}
-		        }
-	    	} else {
-	    		error++;
-	    		if (symbolOfMethod.size() > methodCall.getArgs().size()) {
-	    			System.out.printf("Line:%d:few args pass to method %s\n", methodCall.getLine(),
-	    				methodCall.getMethodName().getName());
-	    		} else {
-	    			System.out.printf("Line:%d:too many args pass to method %s\n",
-	    				methodCall.getLine(), methodCall.getMethodName().getName());
-	    		}
-	    	}	
+        	if (methodCall.getInstance().getType() instanceof UserDefinedType) {
+        		ArrayList<Type> symbolOfMethod = findMethodArgs(methodCall.getMethodName().getName(),
+		        	((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
+		        if (symbolOfMethod.size() == methodCall.getArgs().size()) {
+			        for (int i = 0; i < methodCall.getArgs().size(); ++i) {
+			        	methodCall.getArgs().get(i).accept(this);
+			        	if (!isSubType(methodCall.getArgs().get(i).getType(), symbolOfMethod.get(i))) {
+			        		error++;
+			        		System.out.printf("Line:%d:%dth arg of %s's type must be %s\n",
+			        			methodCall.getArgs().get(i).getLine(), i, methodCall.getMethodName().getName(),
+			        			symbolOfMethod.get(i));
+			        	}
+			        }
+		    	} else {
+		    		error++;
+		    		if (symbolOfMethod.size() > methodCall.getArgs().size()) {
+		    			System.out.printf("Line:%d:few args pass to method %s\n", methodCall.getLine(),
+		    				methodCall.getMethodName().getName());
+		    		} else {
+		    			System.out.printf("Line:%d:too many args pass to method %s\n",
+		    				methodCall.getLine(), methodCall.getMethodName().getName());
+		    		}
+		    	}	
+        	}	
         }
-        if (error == 0) {
+        if (error == 0 && !(methodCall.getInstance().getType() instanceof NoType)) {
     		methodCall.setType(findReturnTypeOfMethod(methodCall.getMethodName().getName(),
     			((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName()));
     	} else {
