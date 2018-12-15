@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - MySmoola",
+            "request": "launch",
+            "mainClass": "MySmoola"
+        }
+    ]
+}
