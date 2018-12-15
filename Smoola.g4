@@ -75,20 +75,23 @@ grammar Smoola;
 		{
 			ArrayList<ErrorItem> errors = new ArrayList<>();
 			SymbolTable symbolTable = new SymbolTable();
-			SymbolTableClassItem objectSymbloTable = new SymbolTableClassItem("Object", null, null, 0);
+			SymbolTableClassItem objectSymbloTable = new SymbolTableClassItem("Object", "", new SymbolTable(), 0);
 			try{
 				objectSymbloTable.putItem(new SymbolTableMethodItem("toString", new ArrayList<>(), 0, null, new StringType()));
+			} catch(Exception e) {}
+			try{
 				symbolTable.put(objectSymbloTable);
 			}catch(Exception e){
-
+				System.out.println("hjhjh");
 			}
+			//printSymbols(symbolTable.getItems());
 		}
 		program1 [symbolTable, 0, errors]
 		{
 			// printArr($program1.synthesized_unres);
 			for (int i =0; i < $program1.synthesized_unres.size(); i++){
 				for (int j = 0; j < $program1.synthesized_type.getClasses().size(); j++){
-					if ($program1.synthesized_unres.get(i).getName().getName() == $program1.synthesized_type.getClasses().get(j).getName().getName()){
+					if ($program1.synthesized_unres.get(i).getName().getName().equals($program1.synthesized_type.getClasses().get(j).getName().getName())){
 						$program1.synthesized_unres.get(i).setClassDeclaration($program1.synthesized_type.getClasses().get(j));
 					}
 				}
@@ -116,6 +119,7 @@ grammar Smoola;
     program1 [SymbolTable inherited_table, int inherited_error_count, ArrayList<ErrorItem> errors] returns
     	[ArrayList<ErrorItem> errors_, Program synthesized_type,int error_count, SymbolTable synthesized_table, ArrayList<UserDefinedType> synthesized_unres]:
         {
+        	// printSymbols($inherited_table.getItems());
 			int index = 0; 
 			$synthesized_type = new Program();
 			ArrayList<UserDefinedType> unres = new ArrayList<UserDefinedType>();
@@ -177,13 +181,11 @@ grammar Smoola;
         	Iterator it = $synthesized_table.getItems().entrySet().iterator();
 		    while (it.hasNext()) {
 		        Map.Entry pair = (Map.Entry)it.next();
-		        if (((SymbolTableClassItem)(pair.getValue())).getParentName() != null && ((SymbolTableClassItem)(pair.getValue())).getParentName() != "") {
+		        if (((SymbolTableClassItem)(pair.getValue())).getParentName() != null && !((SymbolTableClassItem)(pair.getValue())).getParentName().equals("")) {
 		        	if (((SymbolTableClassItem)($synthesized_table.getInCurrentScope(((SymbolTableClassItem)(pair.getValue())).getParentName()))) != null) {
 		        		((SymbolTableClassItem)(pair.getValue())).setParent(((SymbolTableClassItem)($synthesized_table.getInCurrentScope(((SymbolTableClassItem)(pair.getValue())).getParentName()))).getSymbolTable());
 					}
-					else{
-						((SymbolTableClassItem)(pair.getValue())).setParent(((SymbolTableClassItem)($synthesized_table.getInCurrentScope("Object"))).getSymbolTable());
-					}
+					
 		         	//((SymbolTableClassItem)(pair.getValue())).setParent();
 		         	Iterator it2 = ((SymbolTableClassItem)(pair.getValue())).getSymbolTable().getItems().entrySet().iterator();
 		         	ArrayList<SymbolTableItem> items = new ArrayList<>();
@@ -226,6 +228,12 @@ grammar Smoola;
 		        		}
 					}
 					// printSymbols($synthesized_table.getItems());
+		    	} else {
+		    		if (!pair.getKey().equals("Object")) {
+		    			// System.out.println(">>.." + pair.getKey());
+		    			((SymbolTableClassItem)(pair.getValue())).setParent(((SymbolTableClassItem)($synthesized_table.getInCurrentScope("Object"))).getSymbolTable());
+		    			((SymbolTableClassItem)(pair.getValue())).setParentName("Object");
+		    		}
 		    	}
         	}
         } 
