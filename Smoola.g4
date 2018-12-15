@@ -72,8 +72,18 @@ grammar Smoola;
 	}
 
 	program:
-		{ArrayList<ErrorItem> errors = new ArrayList<>();}
-		program1 [new SymbolTable(), 0, errors]
+		{
+			ArrayList<ErrorItem> errors = new ArrayList<>();
+			SymbolTable symbolTable = new SymbolTable();
+			SymbolTableClassItem objectSymbloTable = new SymbolTableClassItem("Object", null, null, 0);
+			try{
+				objectSymbloTable.putItem(new SymbolTableMethodItem("toString", new ArrayList<>(), 0, null, new StringType()));
+				symbolTable.put(objectSymbloTable);
+			}catch(Exception e){
+
+			}
+		}
+		program1 [symbolTable, 0, errors]
 		{
 			// printArr($program1.synthesized_unres);
 			for (int i =0; i < $program1.synthesized_unres.size(); i++){
@@ -170,7 +180,10 @@ grammar Smoola;
 		        if (((SymbolTableClassItem)(pair.getValue())).getParentName() != null && ((SymbolTableClassItem)(pair.getValue())).getParentName() != "") {
 		        	if (((SymbolTableClassItem)($synthesized_table.getInCurrentScope(((SymbolTableClassItem)(pair.getValue())).getParentName()))) != null) {
 		        		((SymbolTableClassItem)(pair.getValue())).setParent(((SymbolTableClassItem)($synthesized_table.getInCurrentScope(((SymbolTableClassItem)(pair.getValue())).getParentName()))).getSymbolTable());
-		        	}
+					}
+					else{
+						((SymbolTableClassItem)(pair.getValue())).setParent(((SymbolTableClassItem)($synthesized_table.getInCurrentScope("Object"))).getSymbolTable());
+					}
 		         	//((SymbolTableClassItem)(pair.getValue())).setParent();
 		         	Iterator it2 = ((SymbolTableClassItem)(pair.getValue())).getSymbolTable().getItems().entrySet().iterator();
 		         	ArrayList<SymbolTableItem> items = new ArrayList<>();

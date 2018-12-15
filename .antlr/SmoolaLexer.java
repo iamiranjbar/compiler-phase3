@@ -106,6 +106,10 @@ public class SmoolaLexer extends Lexer {
 	}
 
 
+			void printArr(ArrayList<UserDefinedType> l){
+				for (int i = 0; i < l.size(); i++)
+					print(l.get(i).getName().getName());
+			}
 
 			class ErrorItem {
 			   	public Integer line;

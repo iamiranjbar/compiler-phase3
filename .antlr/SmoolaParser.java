@@ -124,6 +124,10 @@ public class SmoolaParser extends Parser {
 	public ATN getATN() { return _ATN; }
 
 
+			void printArr(ArrayList<UserDefinedType> l){
+				for (int i = 0; i < l.size(); i++)
+					print(l.get(i).getName().getName());
+			}
 
 			class ErrorItem {
 			   	public Integer line;
@@ -192,10 +196,21 @@ public class SmoolaParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			ArrayList<ErrorItem> errors = new ArrayList<>();
-			setState(69);
-			((ProgramContext)_localctx).program1 = program1(new SymbolTable(), 0, errors);
 
+						ArrayList<ErrorItem> errors = new ArrayList<>();
+						SymbolTable symbolTable = new SymbolTable();
+						SymbolTableClassItem objectSymbloTable = new SymbolTableClassItem("Object", null, null, 0);
+						try{
+							objectSymbloTable.putItem(new SymbolTableMethodItem("toString", new ArrayList<>(), 0, null, new StringType()));
+							symbolTable.put(objectSymbloTable);
+						}catch(Exception e){
+
+						}
+					
+			setState(69);
+			((ProgramContext)_localctx).program1 = program1(symbolTable, 0, errors);
+
+						// printArr(((ProgramContext)_localctx).program1.synthesized_unres);
 						for (int i =0; i < ((ProgramContext)_localctx).program1.synthesized_unres.size(); i++){
 							for (int j = 0; j < ((ProgramContext)_localctx).program1.synthesized_type.getClasses().size(); j++){
 								if (((ProgramContext)_localctx).program1.synthesized_unres.get(i).getName().getName() == ((ProgramContext)_localctx).program1.synthesized_type.getClasses().get(j).getName().getName()){
@@ -219,6 +234,8 @@ public class SmoolaParser extends Parser {
 							VisitorType visitorType = new VisitorType(((ProgramContext)_localctx).program1.synthesized_table);
 							((ProgramContext)_localctx).program1.synthesized_type.accept(visitorType);
 						}
+						// VisitorImpl visitor = new VisitorImpl();
+						// ((ProgramContext)_localctx).program1.synthesized_type.accept(visitor);
 					
 			}
 		}
@@ -274,7 +291,7 @@ public class SmoolaParser extends Parser {
 
 						int index = 0; 
 						((Program1Context)_localctx).synthesized_type =  new Program();
-						((Program1Context)_localctx).synthesized_unres =  new ArrayList<UserDefinedType>();
+						ArrayList<UserDefinedType> unres = new ArrayList<UserDefinedType>();
 					
 			setState(73);
 			((Program1Context)_localctx).mainClass = mainClass(new SymbolTable(inherited_table));
@@ -298,7 +315,7 @@ public class SmoolaParser extends Parser {
 				{
 				{
 				setState(75);
-				((Program1Context)_localctx).classDeclaration = classDeclaration(_localctx.inherited_error_count ,index , new SymbolTable(inherited_table), _localctx.errors, _localctx.synthesized_unres);
+				((Program1Context)_localctx).classDeclaration = classDeclaration(_localctx.inherited_error_count ,index , new SymbolTable(inherited_table), _localctx.errors, unres);
 
 						 	((Program1Context)_localctx).errors =  ((Program1Context)_localctx).classDeclaration.errors_; 
 						 	index = ((Program1Context)_localctx).classDeclaration.synthesized_index;
@@ -329,7 +346,8 @@ public class SmoolaParser extends Parser {
 				    			// System.out.printf("Line:%d:Redefinition of class %s\n", (((Program1Context)_localctx).classDeclaration!=null?(((Program1Context)_localctx).classDeclaration.start):null).getLine(), ((Program1Context)_localctx).classDeclaration.synthesized_type.getName().getName());
 				    		}
 						 {
-							((Program1Context)_localctx).synthesized_unres =  ((Program1Context)_localctx).classDeclaration.synthesized_unres;
+							unres = ((Program1Context)_localctx).classDeclaration.synthesized_unres;
+							// printArr(((Program1Context)_localctx).classDeclaration.synthesized_unres);
 						 }
 						 
 				}
@@ -397,7 +415,7 @@ public class SmoolaParser extends Parser {
 			        
 			setState(85);
 			match(EOF);
-			((Program1Context)_localctx).errors_ =  _localctx.errors; printSymbols(_localctx.synthesized_table.getItems());
+			((Program1Context)_localctx).errors_ =  _localctx.errors; printSymbols(_localctx.synthesized_table.getItems());((Program1Context)_localctx).synthesized_unres =  unres;
 			}
 		}
 		catch (RecognitionException re) {
@@ -580,6 +598,7 @@ public class SmoolaParser extends Parser {
 
 						((ClassDeclarationContext)_localctx).synthesized_type =  new ClassDeclaration(new Identifier(((ClassDeclarationContext)_localctx).name.getText()), ((((ClassDeclarationContext)_localctx).father_name != null) ? new Identifier(((ClassDeclarationContext)_localctx).father_name.getText()) : null));
 						_localctx.synthesized_type.setLine(((ClassDeclarationContext)_localctx).name.getLine());
+						// printArr(_localctx.inherited_unres);
 					
 			setState(114);
 			match(T__1);
@@ -668,6 +687,7 @@ public class SmoolaParser extends Parser {
 			setState(131);
 			match(T__9);
 
+						((ClassDeclarationContext)_localctx).synthesized_unres =  _localctx.inherited_unres;
 						((ClassDeclarationContext)_localctx).synthesized_table =  _localctx.inherited_table;
 						((ClassDeclarationContext)_localctx).error_count =  _localctx.inherited_error_count;
 						((ClassDeclarationContext)_localctx).synthesized_index =  _localctx.inherited_index;
@@ -2993,8 +3013,8 @@ public class SmoolaParser extends Parser {
 
 							((TypeContext)_localctx).synthesized_type =  new UserDefinedType();
 							((UserDefinedType)_localctx.synthesized_type).setName(new Identifier(((TypeContext)_localctx).ID.getText()));
+							_localctx.inherited_unres.add((UserDefinedType)_localctx.synthesized_type);
 							((TypeContext)_localctx).synthesized_unres =  _localctx.inherited_unres;
-							_localctx.synthesized_unres.add((UserDefinedType)_localctx.synthesized_type);
 						
 				}
 				break;
