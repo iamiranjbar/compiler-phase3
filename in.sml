@@ -48,7 +48,7 @@ class Test2 extends Test1 {
     }
 }
 
-class Test1 {
+class Test1 extends Test5 {
     #var variable : int[];
     var i : Test2;
     def method1() : string {
@@ -59,3 +59,14 @@ class Test1 {
     }
 }
 
+class Test5 {
+	def method2(): int {
+        var i: string;
+        var a: Test1;
+        a = new Test1();
+        i = a.toString();
+        i = this.nn(new Test1().method1());
+        variable = new int[10];
+        return 1;
+    }
+}

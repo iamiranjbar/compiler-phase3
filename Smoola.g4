@@ -191,20 +191,28 @@ grammar Smoola;
 		         	ArrayList<SymbolTableItem> items = new ArrayList<>();
 				    while (it2.hasNext()) {
 				        Map.Entry pair2 = (Map.Entry)it2.next();
-				        if (((SymbolTableClassItem)(pair.getValue())).getParentSymbolTable() != null && ((SymbolTableClassItem)(pair.getValue())).getParentSymbolTable().getItems().containsKey(pair2.getKey())) {
-				        	if (pair2.getValue() instanceof SymbolTableMethodItem) {
-				        		$error_count++;
-				        		$errors.add(new ErrorItem(new Integer(((SymbolTableMethodItem)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of method %s\n",
-    								((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName())));
-				        		// System.out.printf("Line:%d:Redefinition of method ‬‬%s\n", ((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName());
-				        		items.add((SymbolTableMethodItem)(pair2.getValue()));
-				        	} else {
-				        		$error_count++;
-				        		$errors.add(new ErrorItem(new Integer(((SymbolTableVariableItemBase)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of variable %s\n",
-    								((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName())));
-				        		// System.out.printf("Line:%d:Redefinition of variable ‬‬%s\n", ((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName());
-				        		items.add((SymbolTableVariableItemBase)(pair2.getValue()));
-				        	}
+				        SymbolTableClassItem current = (SymbolTableClassItem)(pair.getValue());
+				        while(current != null && current.getParentName() != null && !(current).getParentName().equals("")) {
+				        	// System.out.println(">>>>"+(current).getParentName());
+				        	if ((current).getParentSymbolTable() != null && (current).getParentSymbolTable().getItems().containsKey(pair2.getKey())) {
+					        	if (pair2.getValue() instanceof SymbolTableMethodItem) {
+					        		$error_count++;
+					        		$errors.add(new ErrorItem(new Integer(((SymbolTableMethodItem)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of method %s\n",
+	    								((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName())));
+					        		// System.out.printf("Line:%d:Redefinition of method ‬‬%s\n", ((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName());
+					        		items.add((SymbolTableMethodItem)(pair2.getValue()));
+					        	} else {
+					        		$error_count++;
+					        		$errors.add(new ErrorItem(new Integer(((SymbolTableVariableItemBase)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of variable %s\n",
+	    								((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName())));
+					        		// System.out.printf("Line:%d:Redefinition of variable ‬‬%s\n", ((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName());
+					        		items.add((SymbolTableVariableItemBase)(pair2.getValue()));
+					        	}
+					        	break;
+					        } else {
+					        	current = ((SymbolTableClassItem)($synthesized_table.getInCurrentScope((current).getParentName())));
+					        	// System.out.println(current.getKey());
+					        }	
 				        }
 					}
 					for(SymbolTableItem element : items) {
