@@ -3,7 +3,7 @@ package ast.node;
 import ast.Visitor;
 import ast.Type.Type;
 
-public abstract class Node extends Object{
+public abstract class Node{
     Type type;
     int line;
     public void accept(Visitor visitor) {}

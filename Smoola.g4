@@ -82,7 +82,7 @@ grammar Smoola;
 			try{
 				symbolTable.put(objectSymbloTable);
 			}catch(Exception e){
-				System.out.println("hjhjh");
+				// System.out.println("hjhjh");
 			}
 			//printSymbols(symbolTable.getItems());
 		}
