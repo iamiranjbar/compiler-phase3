@@ -554,7 +554,7 @@ public class VisitorType implements Visitor {
             }   
         }
         if (methodCall.getMethodName() != null) {
-            methodCall.getMethodName().accept(this);
+            // methodCall.getMethodName().accept(this);
             if (error == 0) {
                	if (methodCall.getInstance().getType() instanceof UserDefinedType
                		&& !findMethodName(methodCall.getMethodName().getName(),
