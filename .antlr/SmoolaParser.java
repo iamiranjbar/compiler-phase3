@@ -180,6 +180,9 @@ public class SmoolaParser extends Parser {
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
 	public static class ProgramContext extends ParserRuleContext {
+		public int error_count;
+		public Program p;
+		public SymbolTable synthesized_table;
 		public Program1Context program1;
 		public Program1Context program1() {
 			return getRuleContext(Program1Context.class,0);
@@ -199,13 +202,16 @@ public class SmoolaParser extends Parser {
 
 						ArrayList<ErrorItem> errors = new ArrayList<>();
 						SymbolTable symbolTable = new SymbolTable();
-						SymbolTableClassItem objectSymbloTable = new SymbolTableClassItem("Object", null, null, 0);
+						SymbolTableClassItem objectSymbloTable = new SymbolTableClassItem("Object", "", new SymbolTable(), 0);
 						try{
 							objectSymbloTable.putItem(new SymbolTableMethodItem("toString", new ArrayList<>(), 0, null, new StringType()));
+						} catch(Exception e) {}
+						try{
 							symbolTable.put(objectSymbloTable);
 						}catch(Exception e){
-
+							// System.out.println("hjhjh");
 						}
+						//printSymbols(symbolTable.getItems());
 					
 			setState(69);
 			((ProgramContext)_localctx).program1 = program1(symbolTable, 0, errors);
@@ -213,13 +219,14 @@ public class SmoolaParser extends Parser {
 						// printArr(((ProgramContext)_localctx).program1.synthesized_unres);
 						for (int i =0; i < ((ProgramContext)_localctx).program1.synthesized_unres.size(); i++){
 							for (int j = 0; j < ((ProgramContext)_localctx).program1.synthesized_type.getClasses().size(); j++){
-								if (((ProgramContext)_localctx).program1.synthesized_unres.get(i).getName().getName() == ((ProgramContext)_localctx).program1.synthesized_type.getClasses().get(j).getName().getName()){
+								if (((ProgramContext)_localctx).program1.synthesized_unres.get(i).getName().getName().equals(((ProgramContext)_localctx).program1.synthesized_type.getClasses().get(j).getName().getName())){
 									((ProgramContext)_localctx).program1.synthesized_unres.get(i).setClassDeclaration(((ProgramContext)_localctx).program1.synthesized_type.getClasses().get(j));
 								}
 							}
 						}
-
+						((ProgramContext)_localctx).synthesized_table =  ((ProgramContext)_localctx).program1.synthesized_table;
 						errors = ((ProgramContext)_localctx).program1.errors_;
+						((ProgramContext)_localctx).error_count =  ((ProgramContext)_localctx).program1.error_count;
 						// print(((ProgramContext)_localctx).program1.error_count);
 						if (((ProgramContext)_localctx).program1.synthesized_table.getItemsSize() == 0 || ((ProgramContext)_localctx).program1.error_count > 0) {
 							if (((ProgramContext)_localctx).program1.synthesized_table.getItemsSize() == 0) {
@@ -229,10 +236,11 @@ public class SmoolaParser extends Parser {
 							}
 							printErrors(errors);
 						} else {
-							VisitorImpl visitor = new VisitorImpl();
+							// VisitorImpl visitor = new VisitorImpl();
 							//((ProgramContext)_localctx).program1.synthesized_type.accept(visitor);
 							VisitorType visitorType = new VisitorType(((ProgramContext)_localctx).program1.synthesized_table);
 							((ProgramContext)_localctx).program1.synthesized_type.accept(visitorType);
+							((ProgramContext)_localctx).p =  ((ProgramContext)_localctx).program1.synthesized_type;
 						}
 						// VisitorImpl visitor = new VisitorImpl();
 						// ((ProgramContext)_localctx).program1.synthesized_type.accept(visitor);
@@ -289,12 +297,13 @@ public class SmoolaParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 
+			        	// printSymbols(_localctx.inherited_table.getItems());
 						int index = 0; 
 						((Program1Context)_localctx).synthesized_type =  new Program();
 						ArrayList<UserDefinedType> unres = new ArrayList<UserDefinedType>();
 					
 			setState(73);
-			((Program1Context)_localctx).mainClass = mainClass(new SymbolTable(inherited_table));
+			((Program1Context)_localctx).mainClass = mainClass(new SymbolTable(inherited_table), _localctx.inherited_error_count);
 
 						_localctx.synthesized_type.setMainClass(((Program1Context)_localctx).mainClass.synthesized_type);
 						try {
@@ -306,7 +315,8 @@ public class SmoolaParser extends Parser {
 			        	}
 			        	catch(Exception e) {
 			        			
-			        	}
+						}
+						((Program1Context)_localctx).inherited_error_count =  ((Program1Context)_localctx).mainClass.synthesized_error_cnt;
 					
 			setState(80);
 			_errHandler.sync(this);
@@ -364,29 +374,38 @@ public class SmoolaParser extends Parser {
 			        	Iterator it = _localctx.synthesized_table.getItems().entrySet().iterator();
 					    while (it.hasNext()) {
 					        Map.Entry pair = (Map.Entry)it.next();
-					        if (((SymbolTableClassItem)(pair.getValue())).getParentName() != null && ((SymbolTableClassItem)(pair.getValue())).getParentName() != "") {
+					        if (((SymbolTableClassItem)(pair.getValue())).getParentName() != null && !((SymbolTableClassItem)(pair.getValue())).getParentName().equals("")) {
 					        	if (((SymbolTableClassItem)(_localctx.synthesized_table.getInCurrentScope(((SymbolTableClassItem)(pair.getValue())).getParentName()))) != null) {
 					        		((SymbolTableClassItem)(pair.getValue())).setParent(((SymbolTableClassItem)(_localctx.synthesized_table.getInCurrentScope(((SymbolTableClassItem)(pair.getValue())).getParentName()))).getSymbolTable());
-					        	}
+								}
+								
 					         	//((SymbolTableClassItem)(pair.getValue())).setParent();
 					         	Iterator it2 = ((SymbolTableClassItem)(pair.getValue())).getSymbolTable().getItems().entrySet().iterator();
 					         	ArrayList<SymbolTableItem> items = new ArrayList<>();
 							    while (it2.hasNext()) {
 							        Map.Entry pair2 = (Map.Entry)it2.next();
-							        if (((SymbolTableClassItem)(pair.getValue())).getParentSymbolTable() != null && ((SymbolTableClassItem)(pair.getValue())).getParentSymbolTable().getItems().containsKey(pair2.getKey())) {
-							        	if (pair2.getValue() instanceof SymbolTableMethodItem) {
-							        		_localctx.error_count++;
-							        		_localctx.errors.add(new ErrorItem(new Integer(((SymbolTableMethodItem)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of method %s\n",
-			    								((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName())));
-							        		// System.out.printf("Line:%d:Redefinition of method ‬‬%s\n", ((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName());
-							        		items.add((SymbolTableMethodItem)(pair2.getValue()));
-							        	} else {
-							        		_localctx.error_count++;
-							        		_localctx.errors.add(new ErrorItem(new Integer(((SymbolTableVariableItemBase)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of variable %s\n",
-			    								((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName())));
-							        		// System.out.printf("Line:%d:Redefinition of variable ‬‬%s\n", ((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName());
-							        		items.add((SymbolTableVariableItemBase)(pair2.getValue()));
-							        	}
+							        SymbolTableClassItem current = (SymbolTableClassItem)(pair.getValue());
+							        while(current != null && current.getParentName() != null && !(current).getParentName().equals("")) {
+							        	// System.out.println(">>>>"+(current).getParentName());
+							        	if ((current).getParentSymbolTable() != null && (current).getParentSymbolTable().getItems().containsKey(pair2.getKey())) {
+								        	if (pair2.getValue() instanceof SymbolTableMethodItem) {
+								        		_localctx.error_count++;
+								        		_localctx.errors.add(new ErrorItem(new Integer(((SymbolTableMethodItem)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of method %s\n",
+				    								((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName())));
+								        		// System.out.printf("Line:%d:Redefinition of method ‬‬%s\n", ((SymbolTableMethodItem)(pair2.getValue())).getLine(), ((SymbolTableMethodItem)(pair2.getValue())).getName());
+								        		items.add((SymbolTableMethodItem)(pair2.getValue()));
+								        	} else {
+								        		_localctx.error_count++;
+								        		_localctx.errors.add(new ErrorItem(new Integer(((SymbolTableVariableItemBase)(pair2.getValue())).getLine()), String.format("Line:%d:Redefinition of variable %s\n",
+				    								((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName())));
+								        		// System.out.printf("Line:%d:Redefinition of variable ‬‬%s\n", ((SymbolTableVariableItemBase)(pair2.getValue())).getLine(), ((SymbolTableVariableItemBase)(pair2.getValue())).getName());
+								        		items.add((SymbolTableVariableItemBase)(pair2.getValue()));
+								        	}
+								        	break;
+								        } else {
+								        	current = ((SymbolTableClassItem)(_localctx.synthesized_table.getInCurrentScope((current).getParentName())));
+								        	// System.out.println(current.getKey());
+								        }	
 							        }
 								}
 								for(SymbolTableItem element : items) {
@@ -410,6 +429,12 @@ public class SmoolaParser extends Parser {
 					        		}
 								}
 								// printSymbols(_localctx.synthesized_table.getItems());
+					    	} else {
+					    		if (!pair.getKey().equals("Object")) {
+					    			// System.out.println(">>.." + pair.getKey());
+					    			((SymbolTableClassItem)(pair.getValue())).setParent(((SymbolTableClassItem)(_localctx.synthesized_table.getInCurrentScope("Object"))).getSymbolTable());
+					    			((SymbolTableClassItem)(pair.getValue())).setParentName("Object");
+					    		}
 					    	}
 			        	}
 			        
@@ -431,8 +456,10 @@ public class SmoolaParser extends Parser {
 
 	public static class MainClassContext extends ParserRuleContext {
 		public SymbolTable inherited_table;
+		public int inherited_error_count;
 		public ClassDeclaration synthesized_type;
 		public SymbolTable synthesized_table;
+		public int synthesized_error_cnt;
 		public Token name;
 		public Token mainMethod;
 		public StatementsContext statements;
@@ -448,15 +475,16 @@ public class SmoolaParser extends Parser {
 			return getToken(SmoolaParser.ID, i);
 		}
 		public MainClassContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
-		public MainClassContext(ParserRuleContext parent, int invokingState, SymbolTable inherited_table) {
+		public MainClassContext(ParserRuleContext parent, int invokingState, SymbolTable inherited_table, int inherited_error_count) {
 			super(parent, invokingState);
 			this.inherited_table = inherited_table;
+			this.inherited_error_count = inherited_error_count;
 		}
 		@Override public int getRuleIndex() { return RULE_mainClass; }
 	}
 
-	public final MainClassContext mainClass(SymbolTable inherited_table) throws RecognitionException {
-		MainClassContext _localctx = new MainClassContext(_ctx, getState(), inherited_table);
+	public final MainClassContext mainClass(SymbolTable inherited_table,int inherited_error_count) throws RecognitionException {
+		MainClassContext _localctx = new MainClassContext(_ctx, getState(), inherited_table, inherited_error_count);
 		enterRule(_localctx, 4, RULE_mainClass);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -498,6 +526,10 @@ public class SmoolaParser extends Parser {
 			setState(104);
 			match(T__9);
 
+						if (!((MainClassContext)_localctx).mainMethod.getText().equals("main")){
+							System.out.printf("Line:%d:there is no method main in main class\n",((MainClassContext)_localctx).mainMethod.getLine());
+							_localctx.inherited_error_count++;
+						}
 			        	try {
 			        		if (((MainClassContext)_localctx).mainMethod.getText() != null) {
 			        			_localctx.inherited_table.put(new SymbolTableMethodItem(((MainClassContext)_localctx).mainMethod.getText(),null,(((MainClassContext)_localctx).mainMethod!=null?((MainClassContext)_localctx).mainMethod.getLine():0),null, new IntType()));	
@@ -514,6 +546,7 @@ public class SmoolaParser extends Parser {
 						b.setReturnValue(((MainClassContext)_localctx).expression.synthesized_type);
 						_localctx.synthesized_type.addMethodDeclaration(b);
 						((MainClassContext)_localctx).synthesized_table =  _localctx.inherited_table;
+						((MainClassContext)_localctx).synthesized_error_cnt =  _localctx.inherited_error_count;
 					
 			}
 		}

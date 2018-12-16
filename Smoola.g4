@@ -126,7 +126,7 @@ grammar Smoola;
 			$synthesized_type = new Program();
 			ArrayList<UserDefinedType> unres = new ArrayList<UserDefinedType>();
 		} 
-			mainClass [new SymbolTable(inherited_table)]
+			mainClass [new SymbolTable(inherited_table), $inherited_error_count]
 		{
 			$synthesized_type.setMainClass($mainClass.synthesized_type);
 			try {
@@ -138,7 +138,8 @@ grammar Smoola;
         	}
         	catch(Exception e) {
         			
-        	}
+			}
+			$inherited_error_count = $mainClass.synthesized_error_cnt;
 		} 
 		(classDeclaration[$inherited_error_count ,index , new SymbolTable(inherited_table), $errors, unres]
 		 {
@@ -249,7 +250,7 @@ grammar Smoola;
         } 
 	EOF {$errors_ = $errors; printSymbols($synthesized_table.getItems());$synthesized_unres = unres;}
     ;
-    mainClass [SymbolTable inherited_table] returns [ClassDeclaration synthesized_type, SymbolTable synthesized_table]:
+    mainClass [SymbolTable inherited_table, int inherited_error_count] returns [ClassDeclaration synthesized_type, SymbolTable synthesized_table, int synthesized_error_cnt]:
         // name should be checked later
         'class' name = ID 
 		{
@@ -258,6 +259,10 @@ grammar Smoola;
 		}
 		'{' 'def' mainMethod = ID '(' ')' ':' 'int' '{'  statements 'return' expression ';' '}' '}'
 		{
+			if (!$mainMethod.getText().equals("main")){
+				System.out.printf("Line:%d:there is no method main in main class\n",$mainMethod.getLine());
+				$inherited_error_count++;
+			}
         	try {
         		if ($mainMethod.getText() != null) {
         			$inherited_table.put(new SymbolTableMethodItem($mainMethod.getText(),null,$mainMethod.line,null, new IntType()));	
@@ -274,6 +279,7 @@ grammar Smoola;
 			b.setReturnValue($expression.synthesized_type);
 			$synthesized_type.addMethodDeclaration(b);
 			$synthesized_table = $inherited_table;
+			$synthesized_error_cnt = $inherited_error_count;
 		}
     ;
 	classDeclaration [int inherited_error_count, int inherited_index, SymbolTable inherited_table, ArrayList<ErrorItem> errors, ArrayList<UserDefinedType> inherited_unres]

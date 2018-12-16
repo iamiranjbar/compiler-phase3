@@ -1,6 +1,6 @@
 class MainClass {
     def main(): int {
-        return (new Test0()).method2();
+        return (new Test1()).method2();
     }
 }
 
@@ -12,7 +12,7 @@ class Test2 extends Test1 {
         var a: Test1;
         a = new Test1();
         i = a.toString();
-        i = this.nn(new Test1().method1());
+        i = this.variable;
         variable = new int[10];
         return 1;
     }
