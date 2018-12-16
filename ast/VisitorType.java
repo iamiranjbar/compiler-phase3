@@ -751,8 +751,19 @@ public class VisitorType implements Visitor {
 	            		if (assign.getlValue() instanceof Identifier && assign.getrValue() instanceof NewArray) {
 	            			String id = ((Identifier)assign.getlValue()).getName();
 	            			updateSizeOfId(id, ((ArrayType)assign.getrValue().getType()).getSize());
-	            		}
-		              	assign.setType(assign.getlValue().getType());
+	            		} else if (assign.getrValue().getType() instanceof ArrayType && assign.getlValue() instanceof Identifier
+	            			&& !(assign.getrValue() instanceof NewArray)) {
+	            			if (((ArrayType)assign.getlValue().getType()).getSize() >=
+	            				((ArrayType)assign.getrValue().getType()).getSize()) {
+	            				assign.setType(assign.getlValue().getType());	
+	            			} else {
+	            				System.out.printf("Line:%d:lValue length must be greater than rValue length in Array assignment.\n",
+	            					assign.getLine());
+	            				assign.setType(new NoType());
+	            			}
+	            		} else {
+		              		assign.setType(assign.getlValue().getType());
+		              	}
 		            } else {
 		            	System.out.printf("Line:%d:incompatible types: %s cannot be converted to %s\n", assign.getLine(),
 		            		 assign.getrValue().getType(), assign.getlValue().getType());

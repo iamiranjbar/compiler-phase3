@@ -47,8 +47,9 @@ class Test2 extends Test1 {
         var g : boolean;
         arr = new int[666];
         g = arr == dd;
-        dd = new int[666];
+        dd = new int[66];
         g = arr == dd;
+        dd = arr;
         writeln(arr.length);
         return 0;
     }
