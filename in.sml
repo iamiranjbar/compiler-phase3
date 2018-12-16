@@ -43,7 +43,12 @@ class Test2 extends Test1 {
 
     def method4(): int {
         var arr : int[];
+        var dd : int[];
+        var g : boolean;
         arr = new int[666];
+        g = arr == dd;
+        dd = new int[666];
+        g = arr == dd;
         writeln(arr.length);
         return 0;
     }

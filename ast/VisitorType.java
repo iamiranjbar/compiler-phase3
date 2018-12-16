@@ -69,6 +69,47 @@ public class VisitorType implements Visitor {
 			}
 		}
 	}
+	private void updateSizeOfId(String id, int size) {
+		try{
+			Type res = ((scope.get(id) != null && scope.get(id) instanceof SymbolTableVariableItemBase) ?
+				((SymbolTableVariableItemBase)(scope.get(id))).getType() : null);
+			if (res == null) {
+				throw new Exception();
+			}
+			((ArrayType)res).setSize(size);
+		} catch (Exception e) {
+			try{
+				// System.out.println(((SymbolTableVariableItemBase)(current.get(id))).getType());
+				Type res = ((current.get(id) != null && current.get(id) instanceof SymbolTableVariableItemBase) ?
+					((SymbolTableVariableItemBase)(current.get(id))).getType() : null);
+				if (res == null) {
+					throw new Exception();
+				}
+				((ArrayType)res).setSize(size);
+			} catch (Exception e1) {
+				//System.out.println(currentName);
+				String ans = currentName;
+				while (!findFather(ans).equals("") && !findFather(ans).equals(currentName)) {
+					Type res;
+					//System.out.printf("fff : %s\n",findFather(ans));
+					try{
+						SymbolTable temp = ((SymbolTableClassItem)(
+							symbolTable.get(findFather(ans)))).getSymbolTable();
+						res = ((temp.get(id) != null && temp.get(id) instanceof SymbolTableVariableItemBase) ?
+							((SymbolTableVariableItemBase)(temp.get(id))).getType() : null);
+					} catch (Exception e2) {
+						ans = findFather(ans);
+						continue;
+					}
+					if (res == null) {
+						ans = findFather(ans);
+						continue;
+					}
+					((ArrayType)res).setSize(size);
+				}
+			}
+		}	
+	}
 
 	private void completeTypeOfClass(List<ClassDeclaration> classes) {
 		for(Map.Entry<String, SymbolTableItem> entryi : symbolTable.getItems().entrySet()) {
@@ -444,7 +485,9 @@ public class VisitorType implements Visitor {
 		            	&& binaryExpression.getRight().getType() instanceof BooleanType) {
 	            		binaryExpression.setType(new BooleanType());
 	            	} else if (binaryExpression.getLeft().getType() instanceof ArrayType
-		            	&& binaryExpression.getRight().getType() instanceof ArrayType) {
+		            	&& binaryExpression.getRight().getType() instanceof ArrayType
+		            	&& ((ArrayType)binaryExpression.getLeft().getType()).getSize() ==
+		            	((ArrayType)binaryExpression.getRight().getType()).getSize()) {
 	            		binaryExpression.setType(new BooleanType());
 	            	} else if (binaryExpression.getLeft().getType() instanceof StringType
 		            	&& binaryExpression.getRight().getType() instanceof StringType) {
@@ -609,7 +652,14 @@ public class VisitorType implements Visitor {
         //System.out.println(newArray.toString());
         if (newArray.getExpression() != null) {
             newArray.getExpression().accept(this);
-            newArray.setType(new ArrayType());   
+            if (newArray.getExpression().getType() instanceof IntType) {
+            	ArrayType t = new ArrayType();
+            	t.setSize(((IntValue)newArray.getExpression()).getConstant());
+            	newArray.setType(t);	
+            } else {
+            	System.out.printf("Line:%d:index of new Array must be int.\n", newArray.getLine());
+            	newArray.setType(new NoType());
+            }
         }
     }
 
@@ -698,6 +748,10 @@ public class VisitorType implements Visitor {
             // System.out.println(assign.getlValue().getType());System.out.println(assign.getrValue().getType());
             if (assign.getlValue() instanceof ArrayCall || assign.getlValue() instanceof Identifier) {
 	            	if (isSubType(assign.getrValue().getType(), assign.getlValue().getType())) {
+	            		if (assign.getlValue() instanceof Identifier && assign.getrValue() instanceof NewArray) {
+	            			String id = ((Identifier)assign.getlValue()).getName();
+	            			updateSizeOfId(id, ((ArrayType)assign.getrValue().getType()).getSize());
+	            		}
 		              	assign.setType(assign.getlValue().getType());
 		            } else {
 		            	System.out.printf("Line:%d:incompatible types: %s cannot be converted to %s\n", assign.getLine(),
