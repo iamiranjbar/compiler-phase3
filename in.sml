@@ -8,11 +8,12 @@ class Test2 extends Test1 {
     var variable : int[];
 
     def method2(): int {
-        var i: string;
+        var i: int;
         var a: Test1;
         a = new Test1();
-        i = a.toString();
-        i = this.variable;
+        #i = a.toString();
+        writeln(i.length);
+        #i = this.variable;
         variable = new int[10];
         return 1;
     }

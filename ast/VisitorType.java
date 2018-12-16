@@ -529,6 +529,9 @@ public class VisitorType implements Visitor {
             } else if (findIdType(id) == null) {
             	System.out.printf("Line:%d:variable %s is not declared\n", length.getLine(), id);
             	length.setType(new NoType());
+            } else if (!(findIdType(id) instanceof ArrayType)) {
+            	System.out.printf("Line:%d:%s is not an array and it does not have length.\n", length.getLine(), id);
+            	length.setType(new NoType());
             }
         }
     }
