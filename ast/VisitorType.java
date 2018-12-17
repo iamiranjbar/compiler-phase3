@@ -501,9 +501,15 @@ public class VisitorType implements Visitor {
 		            	|| binaryExpression.getRight().getType() instanceof NoType){
 		            	binaryExpression.setType(new NoType());
 		            } else {
-		            	binaryExpression.setType(new NoType());
-		            	System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
-		            		binaryExpression.getBinaryOperator().name());
+		            	if (binaryExpression.getLeft().getType() instanceof ArrayType
+		            	&& binaryExpression.getRight().getType() instanceof ArrayType){
+							binaryExpression.setType(new NoType());
+							System.out.printf("Line:%d:Diffrent size of array operands\n", binaryExpression.getLine());
+						}else{
+							binaryExpression.setType(new NoType());
+							System.out.printf("Line:%d:unsupported operand type for %s\n", binaryExpression.getLine(),
+								binaryExpression.getBinaryOperator().name());
+						}
 		            }
             	} else {
 	            	if(binaryExpression.getLeft().getType() instanceof IntType

@@ -69,13 +69,29 @@ class Test1 extends Test5 {
 }
 
 class Test5 {
-	def method2u(): int {
+	def method2u(): Test5 {
         var i: string;
-        var a: Test1;
-        a = new Test1();
+        var a: Test2;
+        var b: int;
+        var c: boolean;
+        var d: int[];
+        var e: Test5;
+        e = a;
+        c = a == e;
+        4 = b;
+        b = b.length;
+        b= i.length;
+        b = a.length;
+        b= c.length;
+        b= d.length;
+        a = (new Test1()).asghar();
         i = a.toString();
         i = this.nn(new Test1().method1());
         variable = new int[10];
-        return 1;
+        return a;
     }
+}
+
+class Test6{
+
 }
