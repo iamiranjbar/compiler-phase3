@@ -24,9 +24,11 @@ class Test2 extends Test1 {
 
     def method3(): int {
         var a:int;
+        var cccc : Test444;
         var b:boolean;
         #var i : Test2;
         #a = b;
+        cccc = new Test444();
         i = new Test2();
         if(a == 2) then
             b = true && false;

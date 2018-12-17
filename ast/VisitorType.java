@@ -668,7 +668,7 @@ public class VisitorType implements Visitor {
         //TODO: implement appropriate visit functionality
         //System.out.println(newClass.toString());
         if (newClass.getClassName() != null) {
-            newClass.getClassName().accept(this);
+            // newClass.getClassName().accept(this);
             if (findClassName(newClass.getClassName().getName())) {
             	UserDefinedType temp = new UserDefinedType();
 	            temp.setClassDeclaration(new ClassDeclaration(
