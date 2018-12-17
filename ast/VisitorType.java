@@ -611,6 +611,11 @@ public class VisitorType implements Visitor {
 	            	System.out.printf("Line:%d:class %s is not declared\n", methodCall.getLine(),
 		            		((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration().getName().getName());
 	            }
+	            else if (((UserDefinedType)methodCall.getInstance().getType()).getClassDeclaration() == null) {
+	            	error++;
+	            	System.out.printf("Line:%d:class %s is not declared\n", methodCall.getLine(),
+		            		((UserDefinedType)methodCall.getInstance().getType()).getName().getName());	
+	            }
             }   
         }
         if (methodCall.getMethodName() != null) {
