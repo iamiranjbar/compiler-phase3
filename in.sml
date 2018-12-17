@@ -71,6 +71,7 @@ class Test1 extends Test5 {
 class Test5 {
 	def method2u(): Test5 {
         var i: string;
+        var ppopp : ehsan;
         var a: Test2;
         var b: int;
         var c: boolean;
@@ -88,6 +89,7 @@ class Test5 {
         i = a.toString();
         i = this.nn(new Test1().method1());
         variable = new int[10];
+        writeln(ppopp.toString());
         return a;
     }
 }

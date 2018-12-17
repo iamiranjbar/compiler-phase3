@@ -90,10 +90,19 @@ grammar Smoola;
 		{
 			// printArr($program1.synthesized_unres);
 			for (int i =0; i < $program1.synthesized_unres.size(); i++){
+				boolean filled = false;
+				// System.out.println(">>>>>> " + $program1.synthesized_unres.get(i).getName().getName());
 				for (int j = 0; j < $program1.synthesized_type.getClasses().size(); j++){
 					if ($program1.synthesized_unres.get(i).getName().getName().equals($program1.synthesized_type.getClasses().get(j).getName().getName())){
 						$program1.synthesized_unres.get(i).setClassDeclaration($program1.synthesized_type.getClasses().get(j));
+						filled = true;
 					}
+				}
+				if (filled == false) {
+					// System.out.printf("Line:%d:class %s does not exist in the program.\n",
+					// 	$program1.synthesized_unres.get(i).getLine(),
+					// 	$program1.synthesized_unres.get(i).getName().getName());
+					// $program1.error_count++;
 				}
 			}
 			$synthesized_table = $program1.synthesized_table;
@@ -885,6 +894,7 @@ grammar Smoola;
 	    ID {
 			$synthesized_type = new UserDefinedType();
 			((UserDefinedType)$synthesized_type).setName(new Identifier($ID.getText()));
+			((UserDefinedType)$synthesized_type).setLine($ID.getLine());
 			$inherited_unres.add((UserDefinedType)$synthesized_type);
 			$synthesized_unres = $inherited_unres;
 		}

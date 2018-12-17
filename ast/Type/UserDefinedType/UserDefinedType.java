@@ -6,7 +6,7 @@ import ast.node.expression.Identifier;
 
 public class UserDefinedType extends Type {
     private ClassDeclaration classDeclaration;
-
+    private int line;
     public ClassDeclaration getClassDeclaration() {
         return classDeclaration;
     }
@@ -21,6 +21,14 @@ public class UserDefinedType extends Type {
 
     public void setName(Identifier name) {
         this.name = name;
+    }
+
+    public int getLine(){
+	return line;
+    }
+
+    public void setLine(int line){
+	this.line = line;
     }
 
     private Identifier name;
